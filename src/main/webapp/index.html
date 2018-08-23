@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        .formfield {
+           height:33%;
+           display: flex;
+           justify-content: center;
+           align-items:center;
+        }
+    </style>
+</head>
+<body>
+<div>
+    <h3>Submit your application</h3>
+    <input class="formfield" type="text" id="name" placeholder="enter name"/>
+    <input class="formfield"type="text" id="email" placeholder="enter email"/>
+    <input class="formfield"type="text" id="phone" placeholder="enter phone number"/>
+    <input class="formfield" type="file" id="upload" />
+</div>
+</body>
+<script type="text/javascript" language="javascript" src="sdk/sdk.nocache.js"></script>
+<script>
+    console.log('Calling exported GWT functions:');
+    var graffiti = new Graffiti('','');
+    //graffiti.sayHello();
+
+    /*
+    Get contents
+    */
+    graffiti.getContents('Post', {
+        success: function(results) {
+            console.log(results.length);
+            console.log(JSON.stringify(results));
+            for (var i = 0; i < results.length; i++) {
+                var object = results[i];
+                console.log('ID: ' + object.objectId);
+                console.log('Title: ' + object.Title);
+                console.log('Content: ' + object.Content);
+                console.log('Author Name: ' + object.Author.Name);
+                console.log('Author About: ' + object.Author.About);
+                console.log('Author Picture: ' + object.Author.Picture.url);
+            }
+        },
+        error: function(error) {
+            alert(error);
+        }
+    }, {
+        include: 'Author',
+        skip: 0,
+        limit: 100
+    });
+
+    /*
+    Save content
+    */
+    var inputEl = document.getElementById('upload');
+    graffiti.upload(inputEl, {
+        success: function(result) {
+            console.log('File URL: ' + result.url);
+            console.log('File Name: ' + result.name);
+
+            var name = document.getElementById("name").value;
+            var email = document.getElementById("email").value;
+            var phone = document.getElementById("phone").value;
+
+            console.log('Name: ' + name);
+            console.log('Email: ' + email);
+            console.log('Phone: ' + phone);
+
+            var testSubmit = { Name : name,  EmailAddress: email, PhoneNumber: phone, Resume: result };
+            graffiti.saveContent('Applications', testSubmit, {
+                success: function(result) {
+                    console.log(JSON.stringify(result));
+                },
+                error: function(error) {
+                    alert(error);
+                }
+            });
+        },
+        error: function(error) {
+            alert(error);
+        }
+    });
+
+</script>
+</html>
