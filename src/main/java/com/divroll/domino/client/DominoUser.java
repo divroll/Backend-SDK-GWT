@@ -169,6 +169,7 @@ public class DominoUser extends DominoBase {
                     acl.setPublicRead(publicRead);
                     setAcl(acl);
                     setRoles(dominoRoles);
+                    callback.success();
                 }
             });
 
@@ -281,6 +282,7 @@ public class DominoUser extends DominoBase {
                     setUsername(username);
                     setAcl(acl);
                     setRoles(dominoRoles);
+                    callback.success();
                 }
             });
         } catch (Exception e) {

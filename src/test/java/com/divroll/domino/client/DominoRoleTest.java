@@ -104,11 +104,7 @@ public class DominoRoleTest extends GWTTestCase {
                     }
                     @Override
                     public void failure(HttpRequestException exception) {
-                        if(exception.getCode() == 400) {
-                            finishTest();
-                        } else {
-                            fail();
-                        }
+                        assertEquals(400, exception.getCode());
                     }
                 });
             }
@@ -183,11 +179,7 @@ public class DominoRoleTest extends GWTTestCase {
                             }
                             @Override
                             public void failure(HttpRequestException exception) {
-                                if(exception.getCode() == 401) {
-                                    finishTest();
-                                } else {
-                                    fail();
-                                }
+                                assertEquals(401, exception.getCode());
                             }
                         });
                     }
@@ -207,41 +199,111 @@ public class DominoRoleTest extends GWTTestCase {
 
 
     }
-/*
+
     @Test
     public void testCreateRoleMasterKeyOnly() {
-        TestApplication application = TestData.getNewApplication();
-        Domino.initialize(application.getAppId(), application.getApiToken(), application.getMasterKey());
+        delayTestFinish(3000);
+        TestData.getNewApplication(new DominoCallbackWithResponse<TestApplication>() {
+            @Override
+            public void success(TestApplication testApplication) {
+                Window.alert("APP ID: " + testApplication.getAppId());
+                Window.alert("API TOKEN: " + testApplication.getApiToken());
+                Window.alert("MASTER KEY: " + testApplication.getMasterKey());
+                Domino.initialize(testApplication.getAppId(), testApplication.getApiToken(), testApplication.getMasterKey());
+                DominoRole role = new DominoRole("Admin");
+                role.setAcl(DominoACL.buildMasterKeyOnly());
+                role.create(new DominoCallback() {
+                    @Override
+                    public void success() {
+                        assertNotNull(role.getEntityId());
+                        assertEquals("Admin", role.getName());
+                        assertFalse(role.getAcl().getPublicRead());
+                        assertFalse(role.getAcl().getPublicWrite());
 
-        DominoRole role = new DominoRole("Admin");
-        role.setAcl(DominoACL.buildMasterKeyOnly());
-        role.create();
+                        role.retrieve(new DominoCallback() {
+                            @Override
+                            public void success() {
+                                assertNotNull(role.getEntityId());
+                                assertNotNull(role.getName());
+                                finishTest();
+                            }
 
-        assertNotNull(role.getEntityId());
-        assertEquals("Admin", role.getName());
-        assertFalse(role.getAcl().getPublicRead());
-        assertFalse(role.getAcl().getPublicWrite());
+                            @Override
+                            public void failure(HttpRequestException exception) {
+                                fail();
+                            }
+                        });
+                    }
+                    @Override
+                    public void failure(HttpRequestException exception) {
+                        fail();
+                    }
+                });
+            }
+            @Override
+            public void failure(HttpRequestException exception) {
+                fail();
+            }
+        });
 
-        role.retrieve();
 
-        assertNotNull(role.getEntityId());
-        assertNotNull(role.getName());
     }
 
-    @Test(expected = UnauthorizedException.class)
     public void testCreateRoleInvalidAppId() {
-        TestApplication application = TestData.getNewApplication();
-        Domino.initialize("WRONG", application.getApiToken());
-        DominoRole role = new DominoRole("Admin");
-        role.create();
+        delayTestFinish(3000);
+        TestData.getNewApplication(new DominoCallbackWithResponse<TestApplication>() {
+            @Override
+            public void success(TestApplication testApplication) {
+                Window.alert("APP ID: " + testApplication.getAppId());
+                Window.alert("API TOKEN: " + testApplication.getApiToken());
+                Window.alert("MASTER KEY: " + testApplication.getMasterKey());
+                Domino.initialize("WRONG", testApplication.getApiToken());
+                DominoRole role = new DominoRole("Admin");
+                role.create(new DominoCallback() {
+                    @Override
+                    public void success() {
+                        fail();
+                    }
+                    @Override
+                    public void failure(HttpRequestException exception) {
+                        assertEquals(401, exception.getCode());
+                    }
+                });
+            }
+            @Override
+            public void failure(HttpRequestException exception) {
+                fail();
+            }
+        });
+
     }
 
-    @Test(expected = UnauthorizedException.class)
     public void testCreateRoleInvalidApiToken() {
-        TestApplication application = TestData.getNewApplication();
-        Domino.initialize(application.getAppId(), "WRONG");
-        DominoRole role = new DominoRole("Admin");
-        role.create();
+        delayTestFinish(3000);
+        TestData.getNewApplication(new DominoCallbackWithResponse<TestApplication>() {
+            @Override
+            public void success(TestApplication testApplication) {
+                Window.alert("APP ID: " + testApplication.getAppId());
+                Window.alert("API TOKEN: " + testApplication.getApiToken());
+                Window.alert("MASTER KEY: " + testApplication.getMasterKey());
+                Domino.initialize(testApplication.getAppId(),"WRONG");
+                DominoRole role = new DominoRole("Admin");
+                role.create(new DominoCallback() {
+                    @Override
+                    public void success() {
+                        fail();
+                    }
+                    @Override
+                    public void failure(HttpRequestException exception) {
+                        assertEquals(401, exception.getCode());
+                    }
+                });
+            }
+            @Override
+            public void failure(HttpRequestException exception) {
+                fail();
+            }
+        });
     }
 
     @Test
@@ -249,40 +311,103 @@ public class DominoRoleTest extends GWTTestCase {
         // TODO
     }
 
-    @Test(expected = UnauthorizedException.class)
     public void testGetRoleInvalidAppId() {
-        TestApplication application = TestData.getNewApplication();
-        Domino.initialize(application.getAppId(), application.getApiToken());
-        DominoRole role = new DominoRole("Admin");
-        role.create();
+        delayTestFinish(3000);
+        TestData.getNewApplication(new DominoCallbackWithResponse<TestApplication>() {
+            @Override
+            public void success(TestApplication testApplication) {
+                Window.alert("APP ID: " + testApplication.getAppId());
+                Window.alert("API TOKEN: " + testApplication.getApiToken());
+                Window.alert("MASTER KEY: " + testApplication.getMasterKey());
+                Domino.initialize(testApplication.getAppId(), testApplication.getApiToken());
+                DominoRole role = new DominoRole("Admin");
+                role.create(new DominoCallback() {
+                    @Override
+                    public void success() {
+                        assertNotNull(role.getEntityId());
+                        assertNotNull(role.getAcl());
+                        assertNotNull(role.getName());
 
-        assertNotNull(role.getEntityId());
-        assertNotNull(role.getAcl());
-        assertNotNull(role.getName());
+                        Domino.initialize("WRONG", testApplication.getApiToken());
+                        role.retrieve(new DominoCallback() {
+                            @Override
+                            public void success() {
+                                assertNull(role.getEntityId());
+                                assertNull(role.getAcl());
+                                assertNull(role.getName());
+                            }
+                            @Override
+                            public void failure(HttpRequestException exception) {
+                                assertEquals(401, exception.getCode());
+                            }
+                        });
 
-        Domino.initialize("WRONG", application.getApiToken());
-        role.retrieve();
-        assertNull(role.getEntityId());
-        assertNull(role.getAcl());
-        assertNull(role.getName());
+                    }
+                    @Override
+                    public void failure(HttpRequestException exception) {
+                        fail();
+                    }
+                });
+
+
+            }
+            @Override
+            public void failure(HttpRequestException exception) {
+                fail();
+            }
+        });
+
     }
 
-    @Test(expected = UnauthorizedException.class)
     public void testGetRoleInvalidApiToken() {
-        TestApplication application = TestData.getNewApplication();
-        Domino.initialize(application.getAppId(), application.getApiToken());
-        DominoRole role = new DominoRole("Admin");
-        role.create();
+        delayTestFinish(3000);
+        TestData.getNewApplication(new DominoCallbackWithResponse<TestApplication>() {
+            @Override
+            public void success(TestApplication testApplication) {
+                Window.alert("APP ID: " + testApplication.getAppId());
+                Window.alert("API TOKEN: " + testApplication.getApiToken());
+                Window.alert("MASTER KEY: " + testApplication.getMasterKey());
+                Domino.initialize(testApplication.getAppId(), testApplication.getApiToken());
+                DominoRole role = new DominoRole("Admin");
+                role.create(new DominoCallback() {
+                    @Override
+                    public void success() {
+                        assertNotNull(role.getEntityId());
+                        assertNotNull(role.getAcl());
+                        assertNotNull(role.getName());
 
-        assertNotNull(role.getEntityId());
-        assertNotNull(role.getAcl());
-        assertNotNull(role.getName());
+                        Domino.initialize(testApplication.getAppId(), "WRONG");
+                        role.retrieve(new DominoCallback() {
+                            @Override
+                            public void success() {
+                                assertNull(role.getEntityId());
+                                assertNull(role.getAcl());
+                                assertNull(role.getName());
+                                fail();
+                            }
 
-        Domino.initialize(application.getAppId(), "WRONG");
-        role.retrieve();
-        assertNull(role.getEntityId());
-        assertNull(role.getAcl());
-        assertNull(role.getName());
+                            @Override
+                            public void failure(HttpRequestException exception) {
+                                assertEquals(401, exception.getCode());
+                            }
+                        });
+
+                    }
+
+                    @Override
+                    public void failure(HttpRequestException exception) {
+                        fail();
+                    }
+                });
+
+
+            }
+            @Override
+            public void failure(HttpRequestException exception) {
+                fail();
+            }
+        });
+
     }
 
     @Test
@@ -292,129 +417,298 @@ public class DominoRoleTest extends GWTTestCase {
 
     @Test
     public void testCreateAndGetRoleWithACLUsingAuthToken() {
-        TestApplication application = TestData.getNewApplication();
-        Domino.initialize(application.getAppId(), application.getApiToken());
+        delayTestFinish(3000);
+        TestData.getNewApplication(new DominoCallbackWithResponse<TestApplication>() {
+            @Override
+            public void success(TestApplication testApplication) {
+                Window.alert("APP ID: " + testApplication.getAppId());
+                Window.alert("API TOKEN: " + testApplication.getApiToken());
+                Window.alert("MASTER KEY: " + testApplication.getMasterKey());
+                Domino.initialize(testApplication.getAppId(), testApplication.getApiToken());
 
-        DominoUser dominoUser = new DominoUser();
-        dominoUser.create("admin", "password");
+                DominoUser dominoUser = new DominoUser();
+                dominoUser.create("admin", "password", new DominoCallback() {
+                    @Override
+                    public void success() {
+                        assertNotNull(dominoUser.getEntityId());
 
-        assertNotNull(dominoUser.getEntityId());
+                        String userId = dominoUser.getEntityId();
 
-        String userId = dominoUser.getEntityId();
+                        DominoRole dominoRole = new DominoRole();
+                        DominoACL dominoACL = DominoACL.build();
+                        dominoACL.setPublicRead(true);
+                        dominoACL.setAclWrite(Arrays.asList(userId));
 
-        DominoRole dominoRole = new DominoRole();
-        DominoACL dominoACL = DominoACL.build();
-        dominoACL.setPublicRead(true);
-        dominoACL.setAclWrite(Arrays.asList(userId));
+                        dominoRole.setAcl(dominoACL);
+                        dominoRole.setName("Admin");
+                        dominoRole.create(new DominoCallback() {
+                            @Override
+                            public void success() {
+                                assertNotNull(dominoRole.getEntityId());
+                                assertTrue(dominoRole.getAcl().getAclWrite().contains("0-0"));
+                                assertTrue(dominoRole.getAcl().getPublicRead());
 
-        dominoRole.setAcl(dominoACL);
-        dominoRole.setName("Admin");
-        dominoRole.create();
+                                dominoUser.login("admin", "password", new DominoCallback() {
+                                    @Override
+                                    public void success() {
+                                        assertNotNull(dominoUser.getAuthToken());
+                                        assertNotNull(Domino.getAuthToken());
 
-        assertNotNull(dominoRole.getEntityId());
-        assertTrue(dominoRole.getAcl().getAclWrite().contains("0-0"));
-        assertTrue(dominoRole.getAcl().getPublicRead());
+                                        dominoRole.retrieve(new DominoCallback() {
+                                            @Override
+                                            public void success() {
+                                                assertNotNull(dominoRole.getEntityId());
+                                                assertTrue(dominoRole.getAcl().getAclWrite().contains("0-0"));
+                                                assertTrue(dominoRole.getAcl().getPublicRead());
+                                                finishTest();
+                                            }
+                                            @Override
+                                            public void failure(HttpRequestException exception) {
+                                                fail();
+                                            }
+                                        });
+                                    }
+                                    @Override
+                                    public void failure(HttpRequestException exception) {
+                                        fail();
+                                    }
+                                });
+                            }
+                            @Override
+                            public void failure(HttpRequestException exception) {
+                                fail();
+                            }
+                        });
+                    }
+                    @Override
+                    public void failure(HttpRequestException exception) {
+                        fail();
+                    }
+                });
+            }
+            @Override
+            public void failure(HttpRequestException exception) {
+                fail();
+            }
+        });
 
-        dominoUser.login("admin", "password");
-        assertNotNull(dominoUser.getAuthToken());
-        assertNotNull(Domino.getAuthToken());
 
-        dominoRole.retrieve();
-//
-        assertNotNull(dominoRole.getEntityId());
-        assertTrue(dominoRole.getAcl().getAclWrite().contains("0-0"));
-        assertTrue(dominoRole.getAcl().getPublicRead());
     }
 
-    @Test(expected = UnauthorizedException.class)
     public void testCreateAndGetRoleWithACLMissingAuthTokenShouldFail() {
-        TestApplication application = TestData.getNewApplication();
-        Domino.initialize(application.getAppId(), application.getApiToken());
+        delayTestFinish(3000);
+        TestData.getNewApplication(new DominoCallbackWithResponse<TestApplication>() {
+            @Override
+            public void success(TestApplication testApplication) {
+                Window.alert("APP ID: " + testApplication.getAppId());
+                Window.alert("API TOKEN: " + testApplication.getApiToken());
+                Window.alert("MASTER KEY: " + testApplication.getMasterKey());
+                Domino.initialize(testApplication.getAppId(), testApplication.getApiToken());
+                DominoUser dominoUser = new DominoUser();
+                dominoUser.create("admin", "password", new DominoCallback() {
+                    @Override
+                    public void success() {
+                        assertNotNull(dominoUser.getEntityId());
 
-        DominoUser dominoUser = new DominoUser();
-        dominoUser.create("admin", "password");
+                        String userId = dominoUser.getEntityId();
 
-        assertNotNull(dominoUser.getEntityId());
+                        DominoRole dominoRole = new DominoRole();
+                        DominoACL dominoACL = DominoACL.build();
+                        dominoACL.setAclRead(Arrays.asList(userId));
+                        dominoACL.setAclWrite(Arrays.asList(userId));
 
-        String userId = dominoUser.getEntityId();
+                        dominoRole.setAcl(dominoACL);
+                        dominoRole.setName("Admin");
+                        dominoRole.create(new DominoCallback() {
+                            @Override
+                            public void success() {
+                                assertNotNull(dominoRole.getEntityId());
+                                assertTrue(dominoRole.getAcl().getAclWrite().contains("0-0"));
+                                assertTrue(dominoRole.getAcl().getAclRead().contains("0-0"));
 
-        DominoRole dominoRole = new DominoRole();
-        DominoACL dominoACL = DominoACL.build();
-        dominoACL.setAclRead(Arrays.asList(userId));
-        dominoACL.setAclWrite(Arrays.asList(userId));
+                                dominoRole.retrieve(new DominoCallback() {
+                                    @Override
+                                    public void success() {
+                                        assertNotNull(dominoRole.getEntityId());
+                                        assertTrue(dominoRole.getAcl().getAclWrite().contains("0-0"));
+                                        assertTrue(dominoRole.getAcl().getAclRead().contains("0-0"));
+                                        fail();
+                                    }
+                                    @Override
+                                    public void failure(HttpRequestException exception) {
+                                        assertEquals(401, exception.getCode());
+                                    }
+                                });
 
-        dominoRole.setAcl(dominoACL);
-        dominoRole.setName("Admin");
-        dominoRole.create();
+                            }
 
-        assertNotNull(dominoRole.getEntityId());
-        assertTrue(dominoRole.getAcl().getAclWrite().contains("0-0"));
-        assertTrue(dominoRole.getAcl().getAclRead().contains("0-0"));
+                            @Override
+                            public void failure(HttpRequestException exception) {
+                                fail();
+                            }
+                        });
 
-        dominoRole.retrieve();
 
-        assertNotNull(dominoRole.getEntityId());
-        assertTrue(dominoRole.getAcl().getAclWrite().contains("0-0"));
-        assertTrue(dominoRole.getAcl().getAclRead().contains("0-0"));
+                    }
+
+                    @Override
+                    public void failure(HttpRequestException exception) {
+                        fail();
+                    }
+                });
+
+
+            }
+            @Override
+            public void failure(HttpRequestException exception) {
+                fail();
+            }
+        });
+
     }
 
     @Test
     public void testUpdatePublicRoleMissingAuthToken() {
-        TestApplication application = TestData.getNewApplication();
-        Domino.initialize(application.getAppId(), application.getApiToken());
+        delayTestFinish(3000);
+        TestData.getNewApplication(new DominoCallbackWithResponse<TestApplication>() {
+            @Override
+            public void success(TestApplication testApplication) {
+                Window.alert("APP ID: " + testApplication.getAppId());
+                Window.alert("API TOKEN: " + testApplication.getApiToken());
+                Window.alert("MASTER KEY: " + testApplication.getMasterKey());
+                Domino.initialize(testApplication.getAppId(), testApplication.getApiToken());
+                DominoRole role = new DominoRole("Admin");
+                role.setAcl(DominoACL.buildPublicReadWrite());
+                role.create(new DominoCallback() {
+                    @Override
+                    public void success() {
+                        String roleId = role.getEntityId();
 
-        DominoRole role = new DominoRole("Admin");
-        role.setAcl(DominoACL.buildPublicReadWrite());
-        role.create();
+                        assertNotNull(role.getEntityId());
+                        assertEquals("Admin", role.getName());
+                        assertTrue(role.getAcl().getPublicRead());
+                        assertTrue(role.getAcl().getPublicWrite());
 
-        String roleId = role.getEntityId();
+                        role.setName("Super Admin");
+                        role.update(new DominoCallback() {
+                            @Override
+                            public void success() {
+                                role.retrieve(new DominoCallback() {
+                                    @Override
+                                    public void success() {
+                                        assertEquals("Super Admin", role.getName());
+                                    }
+                                    @Override
+                                    public void failure(HttpRequestException exception) {
+                                        fail();
+                                    }
+                                });
+                            }
+                            @Override
+                            public void failure(HttpRequestException exception) {
+                                fail();
+                            }
+                        });
 
-        assertNotNull(role.getEntityId());
-        assertEquals("Admin", role.getName());
-        assertTrue(role.getAcl().getPublicRead());
-        assertTrue(role.getAcl().getPublicWrite());
 
-        role.setName("Super Admin");
-        role.update();
+                    }
 
-        role.retrieve();
+                    @Override
+                    public void failure(HttpRequestException exception) {
+                        fail();
+                    }
+                });
 
-        assertEquals("Super Admin", role.getName());
+
+            }
+            @Override
+            public void failure(HttpRequestException exception) {
+                fail();
+            }
+        });
+
+
+
     }
 
-    @Test(expected = UnauthorizedException.class)
     public void testUpdateRoleWithACLMissingAuthTokenShouldFail() {
-        TestApplication application = TestData.getNewApplication();
-        Domino.initialize(application.getAppId(), application.getApiToken());
+        delayTestFinish(3000);
+        TestData.getNewApplication(new DominoCallbackWithResponse<TestApplication>() {
+            @Override
+            public void success(TestApplication testApplication) {
+                Window.alert("APP ID: " + testApplication.getAppId());
+                Window.alert("API TOKEN: " + testApplication.getApiToken());
+                Window.alert("MASTER KEY: " + testApplication.getMasterKey());
+                Domino.initialize(testApplication.getAppId(), testApplication.getApiToken());
 
-        DominoUser dominoUser = new DominoUser();
-        dominoUser.create("admin", "password");
+                DominoUser dominoUser = new DominoUser();
+                dominoUser.create("admin", "password", new DominoCallback() {
+                    @Override
+                    public void success() {
+                        assertNotNull(dominoUser.getEntityId());
 
-        assertNotNull(dominoUser.getEntityId());
+                        String userId = dominoUser.getEntityId();
 
-        String userId = dominoUser.getEntityId();
+                        DominoRole dominoRole = new DominoRole();
+                        DominoACL dominoACL = DominoACL.build();
+                        dominoACL.setAclRead(Arrays.asList(userId));
+                        dominoACL.setAclWrite(Arrays.asList(userId));
 
-        DominoRole dominoRole = new DominoRole();
-        DominoACL dominoACL = DominoACL.build();
-        dominoACL.setAclRead(Arrays.asList(userId));
-        dominoACL.setAclWrite(Arrays.asList(userId));
+                        dominoRole.setAcl(dominoACL);
+                        dominoRole.setName("Admin");
+                        dominoRole.create(new DominoCallback() {
+                            @Override
+                            public void success() {
+                                assertNotNull(dominoRole.getEntityId());
+                                assertTrue(dominoRole.getAcl().getAclWrite().contains("0-0"));
+                                assertTrue(dominoRole.getAcl().getAclRead().contains("0-0"));
 
-        dominoRole.setAcl(dominoACL);
-        dominoRole.setName("Admin");
-        dominoRole.create();
+                                dominoRole.setName("Super Admin");
+                                dominoRole.update(new DominoCallback() {
+                                    @Override
+                                    public void success() {
+                                        assertNotNull(dominoRole.getEntityId());
+                                        assertTrue(dominoRole.getAcl().getAclWrite().contains("0-0"));
+                                        assertTrue(dominoRole.getAcl().getAclRead().contains("0-0"));
+                                        fail();
+                                    }
 
-        assertNotNull(dominoRole.getEntityId());
-        assertTrue(dominoRole.getAcl().getAclWrite().contains("0-0"));
-        assertTrue(dominoRole.getAcl().getAclRead().contains("0-0"));
+                                    @Override
+                                    public void failure(HttpRequestException exception) {
+                                        assertEquals(401, exception.getCode());
+                                    }
+                                });
 
-        dominoRole.setName("Super Admin");
-        dominoRole.update();
 
-        assertNotNull(dominoRole.getEntityId());
-        assertTrue(dominoRole.getAcl().getAclWrite().contains("0-0"));
-        assertTrue(dominoRole.getAcl().getAclRead().contains("0-0"));
+                            }
+
+                            @Override
+                            public void failure(HttpRequestException exception) {
+                                fail();
+                            }
+                        });
+
+
+                    }
+
+                    @Override
+                    public void failure(HttpRequestException exception) {
+                        fail();
+                    }
+                });
+
+
+
+            }
+            @Override
+            public void failure(HttpRequestException exception) {
+                fail();
+            }
+        });
+
+
     }
-
+/*
     @Test
     public void testUpdatePublicRoleUsingAuthToken() {
         TestApplication application = TestData.getNewApplication();
@@ -726,108 +1020,334 @@ public class DominoRoleTest extends GWTTestCase {
 
         role.delete();
     }
-
-    @Test(expected = BadRequestException.class)
+*/
     public void testDeletePublicRoleWithAuthTokenThenRetrieveShouldFail() {
-        TestApplication application = TestData.getNewApplication();
-        Domino.initialize(application.getAppId(), application.getApiToken());
+        delayTestFinish(3000);
+        TestData.getNewApplication(new DominoCallbackWithResponse<TestApplication>() {
+            @Override
+            public void success(TestApplication testApplication) {
+                Window.alert("APP ID: " + testApplication.getAppId());
+                Window.alert("API TOKEN: " + testApplication.getApiToken());
+                Window.alert("MASTER KEY: " + testApplication.getMasterKey());
+                Domino.initialize(testApplication.getAppId(), testApplication.getApiToken());
+                DominoUser adminUser = new DominoUser();
+                adminUser.setAcl(DominoACL.buildMasterKeyOnly());
+                adminUser.create("admin", "password", new DominoCallback() {
+                    @Override
+                    public void success() {
+                        adminUser.login("admin", "password", new DominoCallback() {
+                            @Override
+                            public void success() {
+                                DominoRole role = new DominoRole("Admin");
+                                role.setAcl(DominoACL.buildPublicReadWrite());
+                                role.create(new DominoCallback() {
+                                    @Override
+                                    public void success() {
+                                        assertNotNull(role.getEntityId());
+
+                                        adminUser.login("admin", "password", new DominoCallback() {
+                                            @Override
+                                            public void success() {
+                                                role.delete(new DominoCallback() {
+                                                    @Override
+                                                    public void success() {
+                                                        role.retrieve(new DominoCallback() {
+                                                            @Override
+                                                            public void success() {
+                                                                assertNull(role.getEntityId());
+                                                                finishTest();
+                                                            }
+                                                            @Override
+                                                            public void failure(HttpRequestException exception) {
+                                                                assertEquals(404, exception.getCode());
+                                                            }
+                                                        });
+                                                    }
+
+                                                    @Override
+                                                    public void failure(HttpRequestException exception) {
+                                                        fail();
+                                                    }
+                                                });
 
 
-        DominoUser adminUser = new DominoUser();
-        adminUser.setAcl(DominoACL.buildMasterKeyOnly());
-        adminUser.create("admin", "password");
+                                            }
 
-        adminUser.login("admin", "password");
-        DominoRole role = new DominoRole("Admin");
-        role.setAcl(DominoACL.buildPublicReadWrite());
-        role.create();
+                                            @Override
+                                            public void failure(HttpRequestException exception) {
+                                                fail();
 
-        assertNotNull(role.getEntityId());
+                                            }
+                                        });
 
-        adminUser.login("admin", "password");
 
-        role.delete();
+                                    }
 
-        role.retrieve();
+                                    @Override
+                                    public void failure(HttpRequestException exception) {
+                                        fail();
 
-        assertNull(role.getEntityId());
+                                    }
+                                });
+
+
+                            }
+
+                            @Override
+                            public void failure(HttpRequestException exception) {
+                                fail();
+                            }
+                        });
+
+                    }
+
+                    @Override
+                    public void failure(HttpRequestException exception) {
+                        fail();
+                    }
+                });
+
+
+            }
+            @Override
+            public void failure(HttpRequestException exception) {
+                fail();
+            }
+        });
+
+
+
     }
 
     @Test
     public void testDeletePublicRoleWithMasterKey() {
-        TestApplication application = TestData.getNewApplication();
-        Domino.initialize(application.getAppId(), application.getApiToken(), application.getMasterKey());
+        delayTestFinish(3000);
+        TestData.getNewApplication(new DominoCallbackWithResponse<TestApplication>() {
+            @Override
+            public void success(TestApplication testApplication) {
+                Window.alert("APP ID: " + testApplication.getAppId());
+                Window.alert("API TOKEN: " + testApplication.getApiToken());
+                Window.alert("MASTER KEY: " + testApplication.getMasterKey());
+                Domino.initialize(testApplication.getAppId(), testApplication.getApiToken(), testApplication.getMasterKey());
+                DominoRole role = new DominoRole("Admin");
+                role.setAcl(DominoACL.buildPublicReadWrite());
+                role.create(new DominoCallback() {
+                    @Override
+                    public void success() {
+                        assertNotNull(role.getEntityId());
+                        role.delete(new DominoCallback() {
+                            @Override
+                            public void success() {
+                                finishTest();
+                            }
 
-        DominoRole role = new DominoRole("Admin");
-        role.setAcl(DominoACL.buildPublicReadWrite());
-        role.create();
+                            @Override
+                            public void failure(HttpRequestException exception) {
+                                fail();
+                            }
+                        });
+                    }
+                    @Override
+                    public void failure(HttpRequestException exception) {
+                        fail();
+                    }
+                });
 
-        assertNotNull(role.getEntityId());
 
-        role.delete();
+            }
+            @Override
+            public void failure(HttpRequestException exception) {
+                fail();
+            }
+        });
+
     }
 
-    @Test(expected = BadRequestException.class)
     public void testDeletePublicRoleWithMasterKeyTheRetrieveShouldFail() {
-        TestApplication application = TestData.getNewApplication();
-        Domino.initialize(application.getAppId(), application.getApiToken(), application.getMasterKey());
+        delayTestFinish(3000);
+        TestData.getNewApplication(new DominoCallbackWithResponse<TestApplication>() {
+            @Override
+            public void success(TestApplication testApplication) {
+                Window.alert("APP ID: " + testApplication.getAppId());
+                Window.alert("API TOKEN: " + testApplication.getApiToken());
+                Window.alert("MASTER KEY: " + testApplication.getMasterKey());
+                Domino.initialize(testApplication.getAppId(), testApplication.getApiToken(), testApplication.getMasterKey());
+                DominoRole role = new DominoRole("Admin");
+                role.setAcl(DominoACL.buildPublicReadWrite());
+                role.create(new DominoCallback() {
+                    @Override
+                    public void success() {
+                        assertNotNull(role.getEntityId());
 
-        DominoRole role = new DominoRole("Admin");
-        role.setAcl(DominoACL.buildPublicReadWrite());
-        role.create();
+                        role.delete(new DominoCallback() {
+                            @Override
+                            public void success() {
+                                role.retrieve(new DominoCallback() {
+                                    @Override
+                                    public void success() {
+                                        assertNull(role.getEntityId());
+                                        fail();
+                                    }
+                                    @Override
+                                    public void failure(HttpRequestException exception) {
+                                        assertEquals(404, exception.getCode());
+                                    }
+                                });
 
-        assertNotNull(role.getEntityId());
+                            }
+                            @Override
+                            public void failure(HttpRequestException exception) {
+                                fail();
+                            }
+                        });
 
-        role.delete();
 
-        role.retrieve();
+                    }
 
-        assertNull(role.getEntityId());
+                    @Override
+                    public void failure(HttpRequestException exception) {
+                        fail();
+                    }
+                });
+
+
+            }
+            @Override
+            public void failure(HttpRequestException exception) {
+                fail();
+            }
+        });
+
+
     }
 
-    @Test(expected = UnauthorizedException.class)
     public void testDeleteRoleWithACLWithAuthToken() {
-        TestApplication application = TestData.getNewApplication();
-        Domino.initialize(application.getAppId(), application.getApiToken());
+        delayTestFinish(3000);
+        TestData.getNewApplication(new DominoCallbackWithResponse<TestApplication>() {
+            @Override
+            public void success(TestApplication testApplication) {
+                Window.alert("APP ID: " + testApplication.getAppId());
+                Window.alert("API TOKEN: " + testApplication.getApiToken());
+                Window.alert("MASTER KEY: " + testApplication.getMasterKey());
+                Domino.initialize(testApplication.getAppId(), testApplication.getApiToken());
+                DominoRole role = new DominoRole("Admin");
+                role.setAcl(DominoACL.buildPublicReadMasterKeyWrite());
+                role.create(new DominoCallback() {
+                    @Override
+                    public void success() {
+                        String adminRoleId = role.getEntityId();
 
-        DominoRole role = new DominoRole("Admin");
-        role.setAcl(DominoACL.buildPublicReadMasterKeyWrite());
-        role.create();
+                        DominoUser adminUser = new DominoUser();
+                        adminUser.setAcl(DominoACL.buildMasterKeyOnly());
+                        adminUser.getRoles().add(role);
+                        adminUser.create("admin", "password", new DominoCallback() {
+                            @Override
+                            public void success() {
+                                assertNotNull(adminUser.getRoles());
+                                assertFalse(adminUser.getRoles().isEmpty());
 
-        String adminRoleId = role.getEntityId();
+                                adminUser.login("admin", "password", new DominoCallback() {
+                                    @Override
+                                    public void success() {
+                                        String authToken = adminUser.getAuthToken();
 
-        DominoUser adminUser = new DominoUser();
-        adminUser.setAcl(DominoACL.buildMasterKeyOnly());
-        adminUser.getRoles().add(role);
-        adminUser.create("admin", "password");
+                                        assertNotNull(authToken);
+                                        assertNotNull(Domino.getAuthToken());
 
-        assertNotNull(adminUser.getRoles());
-        assertFalse(adminUser.getRoles().isEmpty());
+                                        role.delete(new DominoCallback() {
+                                            @Override
+                                            public void success() {
+                                                fail();
+                                            }
+                                            @Override
+                                            public void failure(HttpRequestException exception) {
+                                                assertEquals(401, exception.getCode());
+                                            }
+                                        });
+                                    }
 
-        adminUser.login("admin", "password");
-        String authToken = adminUser.getAuthToken();
+                                    @Override
+                                    public void failure(HttpRequestException exception) {
+                                        fail();
+                                    }
+                                });
+                            }
+                            @Override
+                            public void failure(HttpRequestException exception) {
+                                fail();
+                            }
+                        });
+                    }
+                    @Override
+                    public void failure(HttpRequestException exception) {
+                        fail();
+                    }
+                });
+            }
+            @Override
+            public void failure(HttpRequestException exception) {
+                fail();
+            }
+        });
 
-        assertNotNull(authToken);
-        assertNotNull(Domino.getAuthToken());
 
-        role.delete();
     }
 
-    @Test(expected = UnauthorizedException.class)
     public void testDeleteRoleWithACLWithoutAuthToken() {
-        TestApplication application = TestData.getNewApplication();
-        Domino.initialize(application.getAppId(), application.getApiToken());
+        delayTestFinish(3000);
+        TestData.getNewApplication(new DominoCallbackWithResponse<TestApplication>() {
+            @Override
+            public void success(TestApplication testApplication) {
+                Window.alert("APP ID: " + testApplication.getAppId());
+                Window.alert("API TOKEN: " + testApplication.getApiToken());
+                Window.alert("MASTER KEY: " + testApplication.getMasterKey());
+                Domino.initialize(testApplication.getAppId(), testApplication.getApiToken());
+                DominoRole role = new DominoRole("Admin");
+                role.setAcl(DominoACL.buildPublicReadMasterKeyWrite());
+                role.create(new DominoCallback() {
+                    @Override
+                    public void success() {
+                        DominoUser adminUser = new DominoUser();
+                        adminUser.setAcl(DominoACL.buildMasterKeyOnly());
+                        adminUser.getRoles().add(role);
+                        adminUser.create("admin", "password", new DominoCallback() {
+                            @Override
+                            public void success() {
+                                role.delete(new DominoCallback() {
+                                    @Override
+                                    public void success() {
+                                        fail();
+                                    }
+                                    @Override
+                                    public void failure(HttpRequestException exception) {
+                                        assertEquals(401, exception.getCode());
+                                    }
+                                });
+                            }
 
-        DominoRole role = new DominoRole("Admin");
-        role.setAcl(DominoACL.buildPublicReadMasterKeyWrite());
-        role.create();
+                            @Override
+                            public void failure(HttpRequestException exception) {
+                                fail();
+                            }
+                        });
 
-        DominoUser adminUser = new DominoUser();
-        adminUser.setAcl(DominoACL.buildMasterKeyOnly());
-        adminUser.getRoles().add(role);
-        adminUser.create("admin", "password");
+                    }
 
-        role.delete();
+                    @Override
+                    public void failure(HttpRequestException exception) {
+                        fail();
+                    }
+                });
+
+
+            }
+            @Override
+            public void failure(HttpRequestException exception) {
+                fail();
+            }
+        });
+
+
     }
-    */
+
 }
