@@ -1,0 +1,4 @@
+<module rename-to="sdkTest" >
+  <inherits name="org.gwtproject.http.HttpClient" />
+  <source path="roll" />
+</module>
