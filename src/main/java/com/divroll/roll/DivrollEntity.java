@@ -2,6 +2,7 @@ package com.divroll.roll;
 
 import com.divroll.roll.exception.DivrollException;
 import com.divroll.roll.exception.UnsupportedPropertyValueException;
+import com.divroll.roll.helper.Base64Utils;
 import com.divroll.roll.helper.JSON;
 import com.google.common.io.ByteStreams;
 import com.google.gwt.http.client.RequestException;
@@ -34,7 +35,9 @@ public class DivrollEntity extends DivrollBase {
 
     public byte[] getBlobProperty(String blobKey) throws RequestException {
         GetRequest getRequest = (GetRequest) HttpClient.get(Divroll.getServerUrl()
-                + entityStoreBase + "/" + getEntityId() + "/blobs/" + blobKey);
+                + entityStoreBase + "/" + getEntityId() + "/blobs/" + blobKey)
+                .queryString("encoding", "base64");
+
         if(Divroll.getMasterKey() != null) {
             getRequest.header(HEADER_MASTER_KEY, Divroll.getMasterKey());
         }
@@ -48,7 +51,7 @@ public class DivrollEntity extends DivrollBase {
             getRequest.header(HEADER_AUTH_TOKEN, Divroll.getAuthToken());
         }
 
-        HttpResponse<InputStream> response = getRequest.asBinary();
+        HttpResponse<String> response = getRequest.asString();
 
         if(response.getStatus() >= 500) {
             throw new DivrollException("Internal Server error"); // TODO
@@ -61,9 +64,10 @@ public class DivrollEntity extends DivrollBase {
         } else if(response.getStatus() >= 400) {
             throw new DivrollException("Client error"); // TODO
         } else if(response.getStatus() == 200) {
-//            InputStream is = response.getBody();
-//            byte[] bytes = ByteStreams.toByteArray(is);
-//            return bytes;
+            if(response.getBody() != null) {
+                byte[] bytes = Base64Utils.fromBase64(response.getBody());
+                return bytes;
+            }
         }
         return null;
     }
@@ -73,7 +77,9 @@ public class DivrollEntity extends DivrollBase {
             throw new DivrollException("Save the entity first before setting a Blob property");
         }
         HttpRequestWithBody httpRequestWithBody = HttpClient.post(Divroll.getServerUrl()
-                + entityStoreBase + "/" + getEntityId() + "/blobs/" + blobKey);
+                + entityStoreBase + "/" + getEntityId() + "/blobs/" + blobKey)
+                .queryString("encoding", "base64");
+
         if(Divroll.getMasterKey() != null) {
             httpRequestWithBody.header(HEADER_MASTER_KEY, Divroll.getMasterKey());
         }
@@ -106,7 +112,9 @@ public class DivrollEntity extends DivrollBase {
         httpRequestWithBody.header("X-Divroll-ACL-Write", aclWrite.toString());
         httpRequestWithBody.header("Content-Type", "application/json");
 
-        HttpResponse<InputStream> response =  httpRequestWithBody.body(value).asBinary();
+        String base64 = Base64Utils.toBase64(value);
+        HttpResponse<String> response = httpRequestWithBody.body(base64).asString();
+
         if(response.getStatus() >= 500) {
             throw new DivrollException("Internal Server error"); // TODO
         } else if(response.getStatus() == 404) {
@@ -118,7 +126,7 @@ public class DivrollEntity extends DivrollBase {
         } else if(response.getStatus() >= 400) {
             throw new DivrollException("Client error"); // TODO
         } else if(response.getStatus() == 201) {
-            InputStream responseBody = response.getBody();
+            //InputStream responseBody = response.getBody();
         }
     }
 
@@ -138,7 +146,7 @@ public class DivrollEntity extends DivrollBase {
             getRequest.header(HEADER_AUTH_TOKEN, Divroll.getAuthToken());
         }
 
-        HttpResponse<InputStream> response = getRequest.asBinary();
+        HttpResponse<JsonNode> response = getRequest.asJson();
 
         if(response.getStatus() >= 500) {
             throw new DivrollException("Internal Server error"); // TODO

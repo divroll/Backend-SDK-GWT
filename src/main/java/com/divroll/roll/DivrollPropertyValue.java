@@ -3,6 +3,8 @@ package com.divroll.roll;
 import com.divroll.roll.exception.UnsupportedPropertyValueException;
 import com.divroll.roll.helper.JSON;
 import com.google.gwt.user.client.Window;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.util.List;
 import java.util.Map;
@@ -27,6 +29,8 @@ public class DivrollPropertyValue {
                 && !value.getClass().getName().equalsIgnoreCase(double.class.getName())
                 && !value.getClass().getName().equalsIgnoreCase(Map.class.getName())
                 && !value.getClass().getName().equalsIgnoreCase(List.class.getName())
+                && !value.getClass().getName().equalsIgnoreCase(JSONArray.class.getName())
+                && !value.getClass().getName().equalsIgnoreCase(JSONObject.class.getName())
                 && !(value instanceof Map)
                 && !(value instanceof List)) {
             throw new UnsupportedPropertyValueException(value.getClass().getName());
