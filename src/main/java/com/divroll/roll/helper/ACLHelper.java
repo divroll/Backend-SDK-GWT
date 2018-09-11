@@ -24,6 +24,8 @@ package com.divroll.roll.helper;
 import com.divroll.roll.DivrollEntityId;
 import com.divroll.roll.SafeJSONOArray;
 import com.divroll.roll.SafeJSONObject;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -62,4 +64,5 @@ public class ACLHelper {
         }
         return false;
     }
+
 }

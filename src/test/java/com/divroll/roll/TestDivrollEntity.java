@@ -85,7 +85,7 @@ public class TestDivrollEntity extends GWTTestCase {
         assertEquals(true, ((List)entity1.getProperty("list")).get(3));
 
         assertEquals("TestUser", entity1.getProperty("username"));
-        assertEquals(30, entity1.getProperty("age"));
+        assertEquals(30, entity1.getIntegerProperty("age").intValue());
         assertEquals("testo", entity1.getProperty("nickname"));
 
 
@@ -133,7 +133,8 @@ public class TestDivrollEntity extends GWTTestCase {
 
         assertNotNull(userProfile.getEntityId());
         assertEquals("Johnny", userProfile.getProperty("nickname"));
-        assertEquals(30, userProfile.getProperty("age"));
+        Double age = (Double) userProfile.getProperty("age");
+        assertEquals(30, age.intValue());
         assertNull(userProfile.getAcl());
         assertNull(userProfile.getAcl());
     }
@@ -153,7 +154,8 @@ public class TestDivrollEntity extends GWTTestCase {
 
                 assertNotNull(userProfile.getEntityId());
                 assertEquals("Johnny", userProfile.getProperty("nickname"));
-                assertEquals(30, userProfile.getProperty("age"));
+                Double age = (Double) userProfile.getProperty("age");
+                assertEquals(30, age.intValue());
                 assertNull(userProfile.getAcl());
                 assertNull(userProfile.getAcl());
 
@@ -315,7 +317,8 @@ public class TestDivrollEntity extends GWTTestCase {
         userProfile.retrieve();
 
         assertNotNull(userProfile.getEntityId());
-        Window.alert(userProfile.getAcl().getAclWrite().toString());
+        Window.alert("USER ID: " + userId);
+        Window.alert("------------------------->" + userProfile.getAcl().getAclWrite().toString());
         assertTrue(userProfile.getAcl().getAclWrite().contains(userId));
         assertTrue(userProfile.getAcl().getPublicRead());
     }
@@ -371,7 +374,8 @@ public class TestDivrollEntity extends GWTTestCase {
         userProfile.setProperty("age", 40);
         userProfile.update();
 
-        assertEquals(40, userProfile.getProperty("age"));
+        Double age = (Double) userProfile.getProperty("age");
+        assertEquals(40, age.intValue());
         assertTrue(userProfile.getAcl().getPublicRead());
         assertTrue(userProfile.getAcl().getPublicWrite());
     }

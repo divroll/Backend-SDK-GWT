@@ -5,6 +5,9 @@ import com.divroll.roll.exception.UnsupportedPropertyValueException;
 import com.divroll.roll.helper.JSON;
 import com.google.common.io.ByteStreams;
 import com.google.gwt.http.client.RequestException;
+import com.google.gwt.json.client.JSONValue;
+import com.google.gwt.user.client.Window;
+import org.apache.tapestry.wml.Do;
 import org.gwtproject.http.client.*;
 import org.gwtproject.http.client.exceptions.BadRequestException;
 import org.gwtproject.http.client.exceptions.NotFoundRequestException;
@@ -161,9 +164,114 @@ public class DivrollEntity extends DivrollBase {
         }
     }
 
+    public Integer getIntegerProperty(String propertyName) {
+        Object value = entityObj.get(propertyName);
+        if(value != null) {
+            Window.alert(value.getClass().getName() + "<----------------");
+            if(value instanceof JSONValue) {
+                try {
+                    JSONValue jsonValue = (JSONValue) value;
+                    Double propertyValue = jsonValue.isNumber().doubleValue();
+                    return propertyValue.intValue();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            } else if(value instanceof Double) {
+                Double propertyValue = (Double) value;
+                return propertyValue.intValue();
+            }
+        } else {
+            return null;
+        }
+        return (Integer) value;
+    }
+
+    public Double getDoubleProperty(String propertyName) {
+        Object value = entityObj.get(propertyName);
+        if(value != null) {
+            if(value instanceof JSONValue) {
+                try {
+                    JSONValue jsonValue = (JSONValue) value;
+                    Double propertyValue = jsonValue.isNumber().doubleValue();
+                    return propertyValue.doubleValue();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            } else if(value instanceof Double) {
+                Double propertyValue = (Double) value;
+                return propertyValue;
+            }
+        } else {
+            return null;
+        }
+        return (Double) value;
+    }
+
+    public Long getLongProperty(String propertyName) {
+        Object value = entityObj.get(propertyName);
+        if(value != null) {
+            if(value instanceof JSONValue) {
+                try {
+                    JSONValue jsonValue = (JSONValue) value;
+                    Double propertyValue = jsonValue.isNumber().doubleValue();
+                    return propertyValue.longValue();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            } else if(value instanceof Double) {
+                Double propertyValue = (Double) value;
+                return propertyValue.longValue();
+            }
+        } else {
+            return null;
+        }
+        return (Long) value;
+    }
+
+    public String getStringProperty(String propertyName) {
+        Object value = entityObj.get(propertyName);
+        if(value != null) {
+            if(value instanceof JSONValue) {
+                try {
+                    JSONValue jsonValue = (JSONValue) value;
+                    String propertyValue = jsonValue.isString().stringValue();
+                    return propertyValue;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        } else {
+            return null;
+        }
+        return (String) value;
+    }
+
     public Object getProperty(String propertyName) {
         Object value = entityObj.get(propertyName);
-        if(value instanceof JSONObject) {
+        Window.alert("Entity=" + entityObj.toString());
+        Window.alert("Property=" + propertyName);
+        Window.alert("Type=" + value.getClass().getName());
+        if(value instanceof JSONValue) {
+            Window.alert("Value=" + value.toString());
+            JSONValue jsonValue = (JSONValue) value;
+            if(jsonValue.isNull() != null) {
+                return null;
+            } else if(jsonValue.isObject() != null) {
+                JSONObject jsonObject = new JSONObject(jsonValue.isObject());
+                Map<String,Object> entityMap = JSON.toMap(jsonObject);
+                return entityMap;
+            } else if(jsonValue.isArray() != null) {
+                JSONArray jsonArray = new JSONArray(jsonValue.isArray());
+                List<Object> list = JSON.toArray(jsonArray);
+                return list;
+            } else if(jsonValue.isBoolean() != null) {
+                return jsonValue.isBoolean().booleanValue();
+            } else if(jsonValue.isString() != null) {
+                return jsonValue.isString().stringValue();
+            } else if(jsonValue.isNumber() != null) {
+                return jsonValue.isNumber().doubleValue();
+            }
+        } else if(value instanceof JSONObject) {
             JSONObject jsonObject = (JSONObject) value;
             Map<String,Object> entityMap = JSON.toMap(jsonObject);
             return entityMap;
@@ -171,7 +279,16 @@ public class DivrollEntity extends DivrollBase {
             JSONArray jsonArray = (JSONArray) value;
             List<Object> list = JSON.toArray(jsonArray);
             return list;
+        } else if(value instanceof com.google.gwt.json.client.JSONObject) {
+            JSONObject jsonObject = new JSONObject((com.google.gwt.json.client.JSONObject) value);
+            Map<String,Object> entityMap = JSON.toMap(jsonObject);
+            return entityMap;
+        } else if(value instanceof com.google.gwt.json.client.JSONArray) {
+            JSONArray jsonArray = new JSONArray((com.google.gwt.json.client.JSONArray) value);
+            List<Object> list = JSON.toArray(jsonArray);
+            return list;
         }
+
         return value;
     }
 
@@ -273,7 +390,6 @@ public class DivrollEntity extends DivrollBase {
         }
         return entities;
     }
-
 
     public List<DivrollEntity> getEntities(String linkName) throws RequestException  {
         List<DivrollEntity> entities = new LinkedList<DivrollEntity>();
@@ -604,7 +720,7 @@ public class DivrollEntity extends DivrollBase {
         httpRequestWithBody.header("Content-Type", "application/json");
 
 
-
+        Window.alert("BODY: " + body.toString());
         HttpResponse<JsonNode> response =  httpRequestWithBody.body(body).asJson();
 
 
@@ -691,6 +807,7 @@ public class DivrollEntity extends DivrollBase {
         }
         return false;
     }
+
     public void retrieve() throws RequestException {
         String completeUrl = Divroll.getServerUrl() + entityStoreBase + "/" + getEntityId();
         GetRequest getRequest = (GetRequest) HttpClient.get(completeUrl);
@@ -709,6 +826,8 @@ public class DivrollEntity extends DivrollBase {
         }
 
         HttpResponse<JsonNode> response = getRequest.asJson();
+
+        Window.alert(response.getBody().getObject().toString());
 
         if(response.getStatus() >= 500) {
             throwException(response);
@@ -746,25 +865,31 @@ public class DivrollEntity extends DivrollBase {
 
             try {
                 aclWriteList = JSON.aclJSONArrayToList(entityJsonObject.getJSONArray("aclWrite"));
+                Window.alert("WRITE------->"  + aclWriteList.toString());
             } catch (Exception e) {
 
             }
 
             try {
                 aclReadList = JSON.aclJSONArrayToList(entityJsonObject.getJSONArray("aclRead"));
+                Window.alert("READ------->"  + aclReadList.toString());
             } catch (Exception e) {
 
             }
 
             try {
                 JSONObject jsonObject = entityJsonObject.getJSONObject("aclWrite");
-                aclWriteList = Arrays.asList(jsonObject.getString("entityId"));
+                if(aclWriteList == null) {
+                    aclWriteList = Arrays.asList(jsonObject.getString("entityId"));
+                }
             } catch (Exception e) {
 
             }
             try {
                 JSONObject jsonObject = entityJsonObject.getJSONObject("aclRead");
-                aclReadList = Arrays.asList(jsonObject.getString("entityId"));
+                if(aclReadList == null) {
+                    aclReadList = Arrays.asList(jsonObject.getString("entityId"));
+                }
             } catch (Exception e) {
 
             }
@@ -781,6 +906,9 @@ public class DivrollEntity extends DivrollBase {
                     // skip
                 } else {
                     Object obj = entityJsonObject.get(propertyKey);
+                    Window.alert("Property->" + propertyKey);
+                    Window.alert("Object->" + obj.toString());
+                    Window.alert("Class->" + obj.getClass().getName());
                     entityObj.put(propertyKey, obj);
                 }
             }
@@ -790,7 +918,7 @@ public class DivrollEntity extends DivrollBase {
             acl.setPublicRead(publicRead);
             setEntityId(entityId);
             setAcl(acl);
-
+            Window.alert("------------------------>" + entityObj.toString());
         }
     }
 

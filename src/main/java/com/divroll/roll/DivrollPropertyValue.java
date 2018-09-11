@@ -26,11 +26,13 @@ public class DivrollPropertyValue {
                 && !value.getClass().getName().equalsIgnoreCase(Double.class.getName())
                 && !value.getClass().getName().equalsIgnoreCase(double.class.getName())
                 && !value.getClass().getName().equalsIgnoreCase(Map.class.getName())
-                && !value.getClass().getName().equalsIgnoreCase(List.class.getName())) {
+                && !value.getClass().getName().equalsIgnoreCase(List.class.getName())
+                && !(value instanceof Map)
+                && !(value instanceof List)) {
             throw new UnsupportedPropertyValueException(value.getClass().getName());
         }
         if(value instanceof Map) {
-            Object test = (Map)((Map) value).keySet().iterator().next();
+            Object test = ((Map) value).keySet().iterator().next();
             if(!(test instanceof String)) {
                 throw new IllegalArgumentException("Map contains non-String key");
             }
