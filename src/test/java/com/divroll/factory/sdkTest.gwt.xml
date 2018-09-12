@@ -1,4 +1,0 @@
-<module rename-to="sdkTest" >
-  <inherits name="com.divroll.http.HttpClient" />
-  <inherits name="com.divroll.factory.sdk" />
-</module>

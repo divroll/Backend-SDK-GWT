@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module rename-to='sdk'>
+  <!-- Inherit the core Web Toolkit stuff.                        -->
+  <!--<inherits name='com.google.gwt.core.Core' />-->
+  <inherits name='com.google.gwt.user.User' />
+
+  <!-- Other module inherits                                      -->
+  <!--<inherits name="io.reactivex.RxJava"/>-->
+  <inherits name="com.divroll.http.HttpClient" />
+
+  <!-- Specify the app entry point class.                         -->
+  <entry-point class='com.divroll.backend.sdk.SDKEntryPoint' />
+  <!-- Specify the paths for translatable code                    -->
+  <source path="sdk"/>
+  <collapse-all-properties />
+  <add-linker name="sso" />
+</module>
