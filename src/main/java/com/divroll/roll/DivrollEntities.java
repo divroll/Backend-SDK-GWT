@@ -2,9 +2,9 @@ package com.divroll.roll;
 
 import com.divroll.roll.helper.JSON;
 import com.google.gwt.http.client.RequestException;
+import io.reactivex.Single;
 import org.gwtproject.http.client.GetRequest;
 import org.gwtproject.http.client.HttpClient;
-import org.gwtproject.http.client.HttpResponse;
 import org.gwtproject.http.client.JsonNode;
 import org.gwtproject.http.client.exceptions.BadRequestException;
 import org.gwtproject.http.client.exceptions.UnauthorizedRequestException;
@@ -16,7 +16,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-public class DivrollEntities extends DivrollBase {
+public class DivrollEntities extends DivrollBase
+    implements Copyable<DivrollEntities> {
 
     private static String entityStoreUrl = "/entities/";
 
@@ -59,27 +60,24 @@ public class DivrollEntities extends DivrollBase {
         this.limit = limit;
     }
 
-    public void query() throws RequestException {
-        try {
-            GetRequest getRequest = (GetRequest) HttpClient.get(Divroll.getServerUrl()
-                    + entityStoreUrl);
+    public Single<DivrollEntities> query() throws RequestException {
+        GetRequest getRequest = (GetRequest) HttpClient.get(Divroll.getServerUrl()
+                + entityStoreUrl);
 
-            if(Divroll.getMasterKey() != null) {
-                getRequest.header(HEADER_MASTER_KEY, Divroll.getMasterKey());
-            }
-            if(Divroll.getAppId() != null) {
-                getRequest.header(HEADER_APP_ID, Divroll.getAppId());
-            }
-            if(Divroll.getApiKey() != null) {
-                getRequest.header(HEADER_API_KEY, Divroll.getApiKey());
-            }
-            if(Divroll.getAuthToken() != null) {
-                getRequest.header(HEADER_AUTH_TOKEN, Divroll.getAuthToken());
-            }
+        if(Divroll.getMasterKey() != null) {
+            getRequest.header(HEADER_MASTER_KEY, Divroll.getMasterKey());
+        }
+        if(Divroll.getAppId() != null) {
+            getRequest.header(HEADER_APP_ID, Divroll.getAppId());
+        }
+        if(Divroll.getApiKey() != null) {
+            getRequest.header(HEADER_API_KEY, Divroll.getApiKey());
+        }
+        if(Divroll.getAuthToken() != null) {
+            getRequest.header(HEADER_AUTH_TOKEN, Divroll.getAuthToken());
+        }
 
-            HttpResponse<JsonNode> response = getRequest.asJson();
-
-
+        return getRequest.asJson().map(response -> {
             if(response.getStatus() >= 500) {
                 throwException(response);
             } else if(response.getStatus() == 401) {
@@ -151,10 +149,13 @@ public class DivrollEntities extends DivrollBase {
                     }
                     getEntities().add(divrollEntity);
                 }
-
             }
-        } catch (RequestException e) {
-            e.printStackTrace();
-        }
+            return copy();
+        });
+    }
+
+    @Override
+    public DivrollEntities copy() {
+        return this;
     }
 }

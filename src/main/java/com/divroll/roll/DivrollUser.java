@@ -1,12 +1,13 @@
 package com.divroll.roll;
 
-import com.divroll.roll.exception.DivrollException;
 import com.divroll.roll.helper.JSON;
 import com.google.gwt.http.client.RequestException;
-import com.google.gwt.user.client.Window;
+import io.reactivex.Single;
+import io.reactivex.SingleEmitter;
+import io.reactivex.SingleOnSubscribe;
+import io.reactivex.functions.Consumer;
 import org.gwtproject.http.client.*;
-import org.gwtproject.http.client.exceptions.BadRequestException;
-import org.gwtproject.http.client.exceptions.UnauthorizedRequestException;
+import org.gwtproject.http.client.exceptions.*;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -14,7 +15,8 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
-public class DivrollUser extends DivrollBase {
+public class DivrollUser extends DivrollBase
+    implements Copyable<DivrollUser> {
 
     private static final String usersUrl = "/entities/users";
     private static final String loginUrl = "/entities/users/login";
@@ -26,7 +28,8 @@ public class DivrollUser extends DivrollBase {
     private DivrollACL acl;
     private List<DivrollRole> roles;
 
-    public void create(String username, String password) throws RequestException {
+    public Single<DivrollUser> create(String username, String password) throws RequestException {
+
         setUsername(username);
         setPassword(password);
 
@@ -46,292 +49,6 @@ public class DivrollUser extends DivrollBase {
         JSONObject userObj = new JSONObject();
         userObj.put("username", username);
         userObj.put("password", password);
-        userObj.put("publicRead", (this.acl != null && this.acl.getPublicRead() != null)
-                ? this.acl.getPublicRead() : JSONObject.NULL);
-        userObj.put("publicWrite", (this.acl != null && this.acl.getPublicWrite() != null)
-                ? this.acl.getPublicWrite() : JSONObject.NULL);
-        JSONObject body = new JSONObject();
-
-        JSONArray roles = new JSONArray();
-        for(DivrollRole role : getRoles()) {
-            JSONObject roleObj = new JSONObject();
-            roleObj.put("entityId", role.getEntityId());
-            roles.put(roleObj);
-        }
-        userObj.put("roles", roles);
-
-        body.put("user", userObj);
-        httpRequestWithBody.body(body);
-        JSONArray aclRead = new JSONArray();
-        JSONArray aclWrite = new JSONArray();
-        if(this.acl != null) {
-            for(String uuid : this.acl.getAclRead()) {
-                JSONObject entityStub = new JSONObject();
-                entityStub.put("entityId", uuid);
-                aclRead.put(entityStub);
-            }
-            for(String uuid : this.acl.getAclWrite()) {
-                JSONObject entityStub = new JSONObject();
-                entityStub.put("entityId", uuid);
-                aclWrite.put(entityStub);
-            }
-        }
-
-
-
-        httpRequestWithBody.header("X-Divroll-ACL-Read", aclRead.toString());
-        httpRequestWithBody.header("X-Divroll-ACL-Write", aclWrite.toString());
-        httpRequestWithBody.header("Content-Type", "application/json");
-
-        HttpResponse<JsonNode> response = httpRequestWithBody.asJson();
-
-        if(response.getStatus() >= 500) {
-            throwException(response);
-        } else if(response.getStatus() == 401) {
-            throw new UnauthorizedRequestException(response.getStatusText(), response.getStatus());
-        } else if(response.getStatus() == 400) {
-            throw new BadRequestException(response.getStatusText(), response.getStatus());
-        } else if(response.getStatus() == 201) {
-            JsonNode responseBody = response.getBody();
-            JSONObject bodyObj = responseBody.getObject();
-            JSONObject responseUser = bodyObj.getJSONObject("user");
-            String entityId = responseUser.getString("entityId");
-            String webToken = responseUser.getString("webToken");
-            setEntityId(entityId);
-            setAuthToken(webToken);
-
-            List<String> aclWriteList = null;
-            List<String> aclReadList = null;
-
-            Boolean publicRead = null;
-            Boolean publicWrite = null;
-
-            try {
-                publicRead = responseUser.get("publicRead") != null ? responseUser.getBoolean("publicRead") : null;
-            } catch (Exception e) {
-
-            }
-
-            try {
-                publicWrite = responseUser.get("publicWrite") != null ? responseUser.getBoolean("publicWrite") : null;
-            } catch (Exception e) {
-
-            }
-
-            try {
-                aclWriteList = JSON.aclJSONArrayToList(responseUser.getJSONArray("aclWrite"));
-            } catch (Exception e) {
-
-            }
-
-            try {
-                aclReadList = JSON.aclJSONArrayToList(responseUser.getJSONArray("aclRead"));
-            } catch (Exception e) {
-
-            }
-
-            try {
-                JSONObject jsonObject = responseUser.getJSONObject("aclWrite");
-                aclWriteList = Arrays.asList(jsonObject.getString("entityId"));
-            } catch (Exception e) {
-
-            }
-            try {
-                JSONObject jsonObject = responseUser.getJSONObject("aclRead");
-                aclReadList = Arrays.asList(jsonObject.getString("entityId"));
-            } catch (Exception e) {
-
-            }
-
-            List<DivrollRole> divrollRoles = null;
-            try {
-                Object rolesObj = responseUser.get("roles");
-                if(roles instanceof JSONArray) {
-                    divrollRoles = new LinkedList<DivrollRole>();
-                    JSONArray jsonArray = (JSONArray) roles;
-                    for(int i=0;i<jsonArray.length();i++) {
-                        JSONObject jsonObject = jsonArray.getJSONObject(i);
-                        String roleId = jsonObject.getString("entityId");
-                        DivrollRole divrollRole = new DivrollRole();
-                        divrollRole.setEntityId(roleId);
-                        divrollRoles.add(divrollRole);
-                    }
-                } else if(rolesObj instanceof JSONObject) {
-                    divrollRoles = new LinkedList<DivrollRole>();
-                    JSONObject jsonObject = (JSONObject) rolesObj;
-                    String roleId = jsonObject.getString("entityId");
-                    DivrollRole divrollRole = new DivrollRole();
-                    divrollRole.setEntityId(roleId);
-                    divrollRoles.add(divrollRole);
-                }
-            } catch (Exception e) {
-                // do nothing
-            }
-
-            DivrollACL acl = new DivrollACL(aclReadList, aclWriteList);
-            acl.setPublicWrite(publicWrite);
-            acl.setPublicRead(publicRead);
-            setAcl(acl);
-            setRoles(divrollRoles);
-
-        }
-    }
-    public void retrieve() throws RequestException  {
-        GetRequest getRequest = (GetRequest) HttpClient.get(Divroll.getServerUrl()
-                + usersUrl + "/" + getEntityId());
-
-        if(Divroll.getMasterKey() != null) {
-            getRequest.header(HEADER_MASTER_KEY, Divroll.getMasterKey());
-        }
-        if(Divroll.getAppId() != null) {
-            getRequest.header(HEADER_APP_ID, Divroll.getAppId());
-        }
-        if(Divroll.getApiKey() != null) {
-            getRequest.header(HEADER_API_KEY, Divroll.getApiKey());
-        }
-        if(Divroll.getAuthToken() != null) {
-            getRequest.header(HEADER_AUTH_TOKEN, Divroll.getAuthToken());
-        }
-
-        HttpResponse<JsonNode> response = getRequest.asJson();
-
-
-        if(response.getStatus() >= 500) {
-            throwException(response);
-        } else if(response.getStatus() == 401) {
-            throw new UnauthorizedRequestException(response.getStatusText(), response.getStatus());
-        } else if(response.getStatus() == 400) {
-            throw new BadRequestException(response.getStatusText(), response.getStatus());
-        }  else if(response.getStatus() >= 400) {
-            throwException(response);
-        } else if(response.getStatus() == 200) {
-            JsonNode body = response.getBody();
-            JSONObject bodyObj = body.getObject();
-            JSONObject userJsonObj = bodyObj.getJSONObject("user");
-            String entityId = userJsonObj.getString("entityId");
-            String username = userJsonObj.getString("username");
-
-            Boolean publicRead = null;
-            Boolean publicWrite = null;
-
-            try {
-                publicRead = userJsonObj.get("publicRead") != null ? userJsonObj.getBoolean("publicRead") : null;
-            } catch (Exception e) {
-
-            }
-
-            try {
-                publicWrite = userJsonObj.get("publicWrite") != null ? userJsonObj.getBoolean("publicWrite") : null;
-            } catch (Exception e) {
-
-            }
-
-            List<String> aclWriteList = null;
-            List<String> aclReadList = null;
-
-            try {
-                aclWriteList = JSON.aclJSONArrayToList(userJsonObj.getJSONArray("aclWrite"));
-            } catch (Exception e) {
-
-            }
-
-            try {
-                aclReadList = JSON.aclJSONArrayToList(userJsonObj.getJSONArray("aclRead"));
-            } catch (Exception e) {
-
-            }
-
-            try {
-                aclWriteList = Arrays.asList(userJsonObj.getString("aclWrite"));
-            } catch (Exception e) {
-
-            }
-
-            try {
-                aclReadList = Arrays.asList(userJsonObj.getString("aclRead"));
-            } catch (Exception e) {
-
-            }
-
-            List<DivrollRole> divrollRoles = null;
-            try {
-                Object roles = userJsonObj.get("roles");
-                if(roles instanceof JSONArray) {
-                    divrollRoles = new LinkedList<DivrollRole>();
-                    JSONArray jsonArray = (JSONArray) roles;
-                    for(int i=0;i<jsonArray.length();i++) {
-                        JSONObject jsonObject = jsonArray.getJSONObject(i);
-                        String roleId = jsonObject.getString("entityId");
-                        DivrollRole divrollRole = new DivrollRole();
-                        divrollRole.setEntityId(roleId);
-                        divrollRoles.add(divrollRole);
-                    }
-                } else if(roles instanceof JSONObject) {
-                    divrollRoles = new LinkedList<DivrollRole>();
-                    JSONObject jsonObject = (JSONObject) roles;
-                    String roleId = jsonObject.getString("entityId");
-                    DivrollRole divrollRole = new DivrollRole();
-                    divrollRole.setEntityId(roleId);
-                    divrollRoles.add(divrollRole);
-                }
-            } catch (Exception e) {
-                // do nothing
-            }
-
-            DivrollACL acl = new DivrollACL(aclReadList, aclWriteList);
-            acl.setPublicWrite(publicWrite);
-            acl.setPublicRead(publicRead);
-
-            setEntityId(entityId);
-            setUsername(username);
-            setAcl(acl);
-            setRoles(divrollRoles);
-
-        }
-    }
-
-    public void update(String newUsername, String newPassword) throws RequestException {
-        String completeUrl = Divroll.getServerUrl() + usersUrl + "/" + getEntityId();
-
-        HttpRequestWithBody httpRequestWithBody = HttpClient.put(completeUrl);
-        if(Divroll.getMasterKey() != null) {
-            httpRequestWithBody.header(HEADER_MASTER_KEY, Divroll.getMasterKey());
-        }
-        if(Divroll.getAppId() != null) {
-            httpRequestWithBody.header(HEADER_APP_ID, Divroll.getAppId());
-        }
-        if(Divroll.getApiKey() != null) {
-            httpRequestWithBody.header(HEADER_API_KEY, Divroll.getApiKey());
-        }
-        if(Divroll.getAuthToken() != null) {
-            httpRequestWithBody.header(HEADER_AUTH_TOKEN, Divroll.getAuthToken());
-        }
-        JSONObject userObj = new JSONObject();
-
-        JSONArray aclRead = new JSONArray();
-        JSONArray aclWrite = new JSONArray();
-        if(acl != null) {
-            for(String uuid : this.acl.getAclRead()) {
-                JSONObject entityStub = new JSONObject();
-                entityStub.put("entityId", uuid);
-                aclRead.put(entityStub);
-            }
-            for(String uuid : this.acl.getAclWrite()) {
-                JSONObject entityStub = new JSONObject();
-                entityStub.put("entityId", uuid);
-                aclWrite.put(entityStub);
-            }
-        }
-
-        userObj.put("aclRead", aclRead);
-        userObj.put("aclWrite", aclWrite);
-
-        if(username != null) {
-            userObj.put("username", newUsername);
-        }
-        if(username != null) {
-            userObj.put("password", newPassword);
-        }
         userObj.put("publicRead", (acl != null && acl.getPublicRead() != null)
                 ? acl.getPublicRead() : JSONObject.NULL);
         userObj.put("publicWrite", (acl != null && acl.getPublicWrite() != null)
@@ -347,194 +64,523 @@ public class DivrollUser extends DivrollBase {
         userObj.put("roles", roles);
 
         body.put("user", userObj);
-
-
+        httpRequestWithBody.body(body);
+        JSONArray aclRead = new JSONArray();
+        JSONArray aclWrite = new JSONArray();
+        if(acl != null) {
+            for(String uuid : acl.getAclRead()) {
+                JSONObject entityStub = new JSONObject();
+                entityStub.put("entityId", uuid);
+                aclRead.put(entityStub);
+            }
+            for(String uuid : acl.getAclWrite()) {
+                JSONObject entityStub = new JSONObject();
+                entityStub.put("entityId", uuid);
+                aclWrite.put(entityStub);
+            }
+        }
 
         httpRequestWithBody.header("X-Divroll-ACL-Read", aclRead.toString());
         httpRequestWithBody.header("X-Divroll-ACL-Write", aclWrite.toString());
         httpRequestWithBody.header("Content-Type", "application/json");
 
+        return httpRequestWithBody.asJson().map(response -> {
+            if(response.getStatus() >= 500) {
+                throw new ServerErrorRequestException();
+            } else if(response.getStatus() == 401) {
+                throw new UnauthorizedRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() == 400) {
+                throw new BadRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() >= 400) {
+                throw new ClientErrorRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() == 201) {
 
+                JsonNode responseBody = response.getBody();
+                JSONObject bodyObj = responseBody.getObject();
+                JSONObject responseUser = bodyObj.getJSONObject("user");
+                String entityId = responseUser.getString("entityId");
+                String webToken = responseUser.getString("webToken");
+                setEntityId(entityId);
+                setAuthToken(webToken);
 
-        HttpResponse<JsonNode> response =  httpRequestWithBody.body(body).asJson();
+                List<String> aclWriteList = null;
+                List<String> aclReadList = null;
 
-        if(response.getStatus() >= 500) {
-            throw new DivrollException(response.getStatusText());
-        } else if(response.getStatus() == 400) {
-            throw new BadRequestException(response.getStatusText(), response.getStatus());
-        } else if(response.getStatus() == 401) {
-            throw new UnauthorizedRequestException(response.getStatusText(), response.getStatus());
-        } else if(response.getStatus() == 404) {
-            throw new DivrollException(response.getStatusText());
-        } else if(response.getStatus() >= 400) {
-            throwException(response);
-        } else if(response.getStatus() == 200) {
+                Boolean publicRead = null;
+                Boolean publicWrite = null;
 
-            JsonNode responseBody = response.getBody();
-            JSONObject bodyObj = responseBody.getObject();
-            JSONObject responseUser = bodyObj.getJSONObject("user");
-            String entityId = responseUser.getString("entityId");
-            //String webToken = responseUser.getString("webToken");
-            String updatedUsername = null;
+                try {
+                    publicRead = responseUser.get("publicRead") != null ? responseUser.getBoolean("publicRead") : null;
+                } catch (Exception e) {}
 
-            try {
-                updatedUsername = responseUser.getString("username");
-            } catch (Exception e) {
-                // do nothing
-            }
+                try {
+                    publicWrite = responseUser.get("publicWrite") != null ? responseUser.getBoolean("publicWrite") : null;
+                } catch (Exception e) {}
 
-            setEntityId(entityId);
-            //setAuthToken(webToken);
+                try {
+                    aclWriteList = JSON.aclJSONArrayToList(responseUser.getJSONArray("aclWrite"));
+                } catch (Exception e) {}
 
-            Boolean publicRead = null;
-            Boolean publicWrite = null;
+                try {
+                    aclReadList = JSON.aclJSONArrayToList(responseUser.getJSONArray("aclRead"));
+                } catch (Exception e) { }
 
-            try {
-                publicRead = responseUser.getBoolean("publicRead");
-            } catch (Exception e) {
+                try {
+                    JSONObject jsonObject = responseUser.getJSONObject("aclWrite");
+                    aclWriteList = Arrays.asList(jsonObject.getString("entityId"));
+                } catch (Exception e) { }
+                try {
+                    JSONObject jsonObject = responseUser.getJSONObject("aclRead");
+                    aclReadList = Arrays.asList(jsonObject.getString("entityId"));
+                } catch (Exception e) { }
 
-            }
-
-            try {
-                publicWrite = responseUser.getBoolean("publicWrite");
-            } catch (Exception e) {
-
-            }
-
-            List<String> aclWriteList = null;
-            List<String> aclReadList = null;
-
-            try {
-                aclWriteList = JSON.aclJSONArrayToList(responseUser.getJSONArray("aclWrite"));
-            } catch (Exception e) {
-
-            }
-
-            try {
-                aclReadList = JSON.aclJSONArrayToList(responseUser.getJSONArray("aclRead"));
-            } catch (Exception e) {
-
-            }
-
-            try {
-                JSONObject jsonObject = responseUser.getJSONObject("aclWrite");
-                aclWriteList = Arrays.asList(jsonObject.getString("entityId"));
-            } catch (Exception e) {
-
-            }
-            try {
-                JSONObject jsonObject = responseUser.getJSONObject("aclRead");
-                aclReadList = Arrays.asList(jsonObject.getString("entityId"));
-            } catch (Exception e) {
-
-            }
-
-            List<DivrollRole> divrollRoles = null;
-            try {
-                Object roleObjects = userObj.get("roles");
-                if(roleObjects instanceof JSONArray) {
-                    divrollRoles = new LinkedList<DivrollRole>();
-                    JSONArray jsonArray = (JSONArray) roles;
-                    for(int i=0;i<jsonArray.length();i++) {
-                        JSONObject jsonObject = jsonArray.getJSONObject(i);
+                List<DivrollRole> divrollRoles = null;
+                try {
+                    Object rolesObj = responseUser.get("roles");
+                    if(roles instanceof JSONArray) {
+                        divrollRoles = new LinkedList<DivrollRole>();
+                        JSONArray jsonArray = (JSONArray) roles;
+                        for(int i=0;i<jsonArray.length();i++) {
+                            JSONObject jsonObject = jsonArray.getJSONObject(i);
+                            String roleId = jsonObject.getString("entityId");
+                            DivrollRole divrollRole = new DivrollRole();
+                            divrollRole.setEntityId(roleId);
+                            divrollRoles.add(divrollRole);
+                        }
+                    } else if(rolesObj instanceof JSONObject) {
+                        divrollRoles = new LinkedList<DivrollRole>();
+                        JSONObject jsonObject = (JSONObject) rolesObj;
                         String roleId = jsonObject.getString("entityId");
                         DivrollRole divrollRole = new DivrollRole();
                         divrollRole.setEntityId(roleId);
                         divrollRoles.add(divrollRole);
                     }
-                } else if(roleObjects instanceof JSONObject) {
-                    divrollRoles = new LinkedList<DivrollRole>();
-                    JSONObject jsonObject = (JSONObject) roleObjects;
-                    String roleId = jsonObject.getString("entityId");
-                    DivrollRole divrollRole = new DivrollRole();
-                    divrollRole.setEntityId(roleId);
-                    divrollRoles.add(divrollRole);
+                } catch (Exception e) {
+                    // do nothing
                 }
-            } catch (Exception e) {
+
+                DivrollACL acl = new DivrollACL(aclReadList, aclWriteList);
+                acl.setPublicWrite(publicWrite);
+                acl.setPublicRead(publicRead);
+                setAcl(acl);
+                setRoles(divrollRoles);
+
+                return copy();
+            }
+            return null;
+        });
+
+
+    }
+
+    public Single<DivrollUser> retrieve() throws RequestException  {
+        return Single.create(new SingleOnSubscribe<DivrollUser>() {
+            @Override
+            public void subscribe(SingleEmitter<DivrollUser> emitter) throws Exception {
+                GetRequest getRequest = (GetRequest) HttpClient.get(Divroll.getServerUrl()
+                        + usersUrl + "/" + getEntityId());
+
+                if(Divroll.getMasterKey() != null) {
+                    getRequest.header(HEADER_MASTER_KEY, Divroll.getMasterKey());
+                }
+                if(Divroll.getAppId() != null) {
+                    getRequest.header(HEADER_APP_ID, Divroll.getAppId());
+                }
+                if(Divroll.getApiKey() != null) {
+                    getRequest.header(HEADER_API_KEY, Divroll.getApiKey());
+                }
+                if(Divroll.getAuthToken() != null) {
+                    getRequest.header(HEADER_AUTH_TOKEN, Divroll.getAuthToken());
+                }
+
+                Single<HttpResponse<JsonNode>> responseSingle = getRequest.asJson();
+                responseSingle.subscribe(new Consumer<HttpResponse<JsonNode>>() {
+                    @Override
+                    public void accept(HttpResponse<JsonNode> response) throws Exception {
+                        if(response.getStatus() >= 500) {
+                            emitter.onError(new ServerErrorRequestException());
+                        } else if(response.getStatus() == 401) {
+                            emitter.onError(new UnauthorizedRequestException(response.getStatusText(), response.getStatus()));
+                        } else if(response.getStatus() == 400) {
+                            emitter.onError(new BadRequestException(response.getStatusText(), response.getStatus()));
+                        }  else if(response.getStatus() >= 400) {
+                            emitter.onError(new ClientErrorRequestException(response.getStatusText(), response.getStatus()));
+                        } else if(response.getStatus() == 200) {
+                            JsonNode body = response.getBody();
+                            JSONObject bodyObj = body.getObject();
+                            JSONObject userJsonObj = bodyObj.getJSONObject("user");
+                            String entityId = userJsonObj.getString("entityId");
+                            String username = userJsonObj.getString("username");
+
+                            Boolean publicRead = null;
+                            Boolean publicWrite = null;
+
+                            try {
+                                publicRead = userJsonObj.get("publicRead") != null ? userJsonObj.getBoolean("publicRead") : null;
+                            } catch (Exception e) {
+
+                            }
+
+                            try {
+                                publicWrite = userJsonObj.get("publicWrite") != null ? userJsonObj.getBoolean("publicWrite") : null;
+                            } catch (Exception e) {
+
+                            }
+
+                            List<String> aclWriteList = null;
+                            List<String> aclReadList = null;
+
+                            try {
+                                aclWriteList = JSON.aclJSONArrayToList(userJsonObj.getJSONArray("aclWrite"));
+                            } catch (Exception e) {
+
+                            }
+
+                            try {
+                                aclReadList = JSON.aclJSONArrayToList(userJsonObj.getJSONArray("aclRead"));
+                            } catch (Exception e) {
+
+                            }
+
+                            try {
+                                aclWriteList = Arrays.asList(userJsonObj.getString("aclWrite"));
+                            } catch (Exception e) {
+
+                            }
+
+                            try {
+                                aclReadList = Arrays.asList(userJsonObj.getString("aclRead"));
+                            } catch (Exception e) {
+
+                            }
+
+                            List<DivrollRole> divrollRoles = null;
+                            try {
+                                Object roles = userJsonObj.get("roles");
+                                if(roles instanceof JSONArray) {
+                                    divrollRoles = new LinkedList<DivrollRole>();
+                                    JSONArray jsonArray = (JSONArray) roles;
+                                    for(int i=0;i<jsonArray.length();i++) {
+                                        JSONObject jsonObject = jsonArray.getJSONObject(i);
+                                        String roleId = jsonObject.getString("entityId");
+                                        DivrollRole divrollRole = new DivrollRole();
+                                        divrollRole.setEntityId(roleId);
+                                        divrollRoles.add(divrollRole);
+                                    }
+                                } else if(roles instanceof JSONObject) {
+                                    divrollRoles = new LinkedList<DivrollRole>();
+                                    JSONObject jsonObject = (JSONObject) roles;
+                                    String roleId = jsonObject.getString("entityId");
+                                    DivrollRole divrollRole = new DivrollRole();
+                                    divrollRole.setEntityId(roleId);
+                                    divrollRoles.add(divrollRole);
+                                }
+                            } catch (Exception e) {
+                                // do nothing
+                            }
+
+                            DivrollACL acl = new DivrollACL(aclReadList, aclWriteList);
+                            acl.setPublicWrite(publicWrite);
+                            acl.setPublicRead(publicRead);
+
+                            setEntityId(entityId);
+                            setUsername(username);
+                            setAcl(acl);
+                            setRoles(divrollRoles);
+
+                            emitter.onSuccess(copy());
+
+                        }
+                    }
+                });
+
+
 
             }
+        });
 
-            DivrollACL acl = new DivrollACL(aclReadList, aclWriteList);
-            acl.setPublicRead(publicRead);
-            acl.setPublicWrite(publicWrite);
-            setEntityId(entityId);
-            if(newUsername != null) {
-                setUsername(updatedUsername);
+    }
+
+    public Single<Boolean> update(String newUsername, String newPassword) throws RequestException {
+        return Single.create(new SingleOnSubscribe<Boolean>() {
+            @Override
+            public void subscribe(SingleEmitter<Boolean> emitter) throws Exception {
+                String completeUrl = Divroll.getServerUrl() + usersUrl + "/" + getEntityId();
+
+                HttpRequestWithBody httpRequestWithBody = HttpClient.put(completeUrl);
+                if(Divroll.getMasterKey() != null) {
+                    httpRequestWithBody.header(HEADER_MASTER_KEY, Divroll.getMasterKey());
+                }
+                if(Divroll.getAppId() != null) {
+                    httpRequestWithBody.header(HEADER_APP_ID, Divroll.getAppId());
+                }
+                if(Divroll.getApiKey() != null) {
+                    httpRequestWithBody.header(HEADER_API_KEY, Divroll.getApiKey());
+                }
+                if(Divroll.getAuthToken() != null) {
+                    httpRequestWithBody.header(HEADER_AUTH_TOKEN, Divroll.getAuthToken());
+                }
+                JSONObject userObj = new JSONObject();
+
+                JSONArray aclRead = new JSONArray();
+                JSONArray aclWrite = new JSONArray();
+                if(getAcl() != null) {
+                    for(String uuid : getAcl().getAclRead()) {
+                        JSONObject entityStub = new JSONObject();
+                        entityStub.put("entityId", uuid);
+                        aclRead.put(entityStub);
+                    }
+                    for(String uuid : getAcl().getAclWrite()) {
+                        JSONObject entityStub = new JSONObject();
+                        entityStub.put("entityId", uuid);
+                        aclWrite.put(entityStub);
+                    }
+                }
+
+                userObj.put("aclRead", aclRead);
+                userObj.put("aclWrite", aclWrite);
+
+                if(username != null) {
+                    userObj.put("username", newUsername);
+                }
+                if(username != null) {
+                    userObj.put("password", newPassword);
+                }
+                userObj.put("publicRead", (acl != null && acl.getPublicRead() != null)
+                        ? acl.getPublicRead() : JSONObject.NULL);
+                userObj.put("publicWrite", (acl != null && acl.getPublicWrite() != null)
+                        ? acl.getPublicWrite() : JSONObject.NULL);
+                JSONObject body = new JSONObject();
+
+                JSONArray roles = new JSONArray();
+                for(DivrollRole role : getRoles()) {
+                    JSONObject roleObj = new JSONObject();
+                    roleObj.put("entityId", role.getEntityId());
+                    roles.put(roleObj);
+                }
+                userObj.put("roles", roles);
+
+                body.put("user", userObj);
+
+                httpRequestWithBody.header("X-Divroll-ACL-Read", aclRead.toString());
+                httpRequestWithBody.header("X-Divroll-ACL-Write", aclWrite.toString());
+                httpRequestWithBody.header("Content-Type", "application/json");
+
+                Single<HttpResponse<JsonNode>> responseSingle =  httpRequestWithBody.body(body).asJson();
+                responseSingle.subscribe(new Consumer<HttpResponse<JsonNode>>() {
+                    @Override
+                    public void accept(HttpResponse<JsonNode> response) throws Exception {
+                        if(response.getStatus() >= 500) {
+                            emitter.onError(new ServerErrorRequestException());
+                        } else if(response.getStatus() == 400) {
+                            emitter.onError(new BadRequestException(response.getStatusText(), response.getStatus()));
+                        } else if(response.getStatus() == 401) {
+                            emitter.onError(new UnauthorizedRequestException(response.getStatusText(), response.getStatus()));
+                        } else if(response.getStatus() == 404) {
+                           emitter.onError(new NotFoundRequestException(response.getStatusText(), response.getStatus()));
+                        } else if(response.getStatus() >= 400) {
+                            emitter.onError(new ClientErrorRequestException(response.getStatusText(), response.getStatus()));
+                        } else if(response.getStatus() == 200) {
+
+                            JsonNode responseBody = response.getBody();
+                            JSONObject bodyObj = responseBody.getObject();
+                            JSONObject responseUser = bodyObj.getJSONObject("user");
+                            String entityId = responseUser.getString("entityId");
+                            //String webToken = responseUser.getString("webToken");
+                            String updatedUsername = null;
+
+                            try {
+                                updatedUsername = responseUser.getString("username");
+                            } catch (Exception e) {
+                                // do nothing
+                            }
+
+                            setEntityId(entityId);
+                            //setAuthToken(webToken);
+
+                            Boolean publicRead = null;
+                            Boolean publicWrite = null;
+
+                            try {
+                                publicRead = responseUser.getBoolean("publicRead");
+                            } catch (Exception e) {
+
+                            }
+
+                            try {
+                                publicWrite = responseUser.getBoolean("publicWrite");
+                            } catch (Exception e) {
+
+                            }
+
+                            List<String> aclWriteList = null;
+                            List<String> aclReadList = null;
+
+                            try {
+                                aclWriteList = JSON.aclJSONArrayToList(responseUser.getJSONArray("aclWrite"));
+                            } catch (Exception e) {
+
+                            }
+
+                            try {
+                                aclReadList = JSON.aclJSONArrayToList(responseUser.getJSONArray("aclRead"));
+                            } catch (Exception e) {
+
+                            }
+
+                            try {
+                                JSONObject jsonObject = responseUser.getJSONObject("aclWrite");
+                                aclWriteList = Arrays.asList(jsonObject.getString("entityId"));
+                            } catch (Exception e) {
+
+                            }
+                            try {
+                                JSONObject jsonObject = responseUser.getJSONObject("aclRead");
+                                aclReadList = Arrays.asList(jsonObject.getString("entityId"));
+                            } catch (Exception e) {
+
+                            }
+
+                            List<DivrollRole> divrollRoles = null;
+                            try {
+                                Object roleObjects = userObj.get("roles");
+                                if(roleObjects instanceof JSONArray) {
+                                    divrollRoles = new LinkedList<DivrollRole>();
+                                    JSONArray jsonArray = (JSONArray) roles;
+                                    for(int i=0;i<jsonArray.length();i++) {
+                                        JSONObject jsonObject = jsonArray.getJSONObject(i);
+                                        String roleId = jsonObject.getString("entityId");
+                                        DivrollRole divrollRole = new DivrollRole();
+                                        divrollRole.setEntityId(roleId);
+                                        divrollRoles.add(divrollRole);
+                                    }
+                                } else if(roleObjects instanceof JSONObject) {
+                                    divrollRoles = new LinkedList<DivrollRole>();
+                                    JSONObject jsonObject = (JSONObject) roleObjects;
+                                    String roleId = jsonObject.getString("entityId");
+                                    DivrollRole divrollRole = new DivrollRole();
+                                    divrollRole.setEntityId(roleId);
+                                    divrollRoles.add(divrollRole);
+                                }
+                            } catch (Exception e) {
+
+                            }
+
+                            DivrollACL acl = new DivrollACL(aclReadList, aclWriteList);
+                            acl.setPublicRead(publicRead);
+                            acl.setPublicWrite(publicWrite);
+                            setEntityId(entityId);
+                            if(newUsername != null) {
+                                setUsername(updatedUsername);
+                            }
+                            setAcl(acl);
+                            setRoles(divrollRoles);
+
+                            emitter.onSuccess(true);
+                        }
+                    }
+                });
             }
-            setAcl(acl);
-            setRoles(divrollRoles);
-        }
+        });
     }
 
-    public void update() throws RequestException {
-        update(null, null);
+    public Single<Boolean> update() throws RequestException {
+        return update(null, null);
     }
 
-    public boolean delete() throws RequestException {
-        HttpRequestWithBody httpRequestWithBody = HttpClient.delete(Divroll.getServerUrl()
-                + usersUrl + "/" + getEntityId());
-        if(Divroll.getMasterKey() != null) {
-            httpRequestWithBody.header(HEADER_MASTER_KEY, Divroll.getMasterKey());
-        }
-        if(Divroll.getAppId() != null) {
-            httpRequestWithBody.header(HEADER_APP_ID, Divroll.getAppId());
-        }
-        if(Divroll.getApiKey() != null) {
-            httpRequestWithBody.header(HEADER_API_KEY, Divroll.getApiKey());
-        }
-        if(Divroll.getAuthToken() != null) {
-            httpRequestWithBody.header(HEADER_AUTH_TOKEN, Divroll.getAuthToken());
-        }
-        HttpResponse<JsonNode> response = httpRequestWithBody.asJson();
-        if(response.getStatus() >= 500) {
-            throwException(response);
-        } else if(response.getStatus() == 401) {
-            throw new UnauthorizedRequestException(response.getStatusText(), response.getStatus());
-        } else if(response.getStatus() >= 400) {
-            throwException(response);
-        } else if(response.getStatus() == 204) {
-            setEntityId(null);
-            setAcl(null);
-            setUsername(null);
-            setRoles(null);
-            setAcl(null);
-            setPassword(null);
-            setAuthToken(null);
-            return true;
-        }
-        return false;
+    public Single<Boolean> delete() throws RequestException {
+        return Single.create(new SingleOnSubscribe<Boolean>() {
+            @Override
+            public void subscribe(SingleEmitter<Boolean> emitter) throws Exception {
+                HttpRequestWithBody httpRequestWithBody = HttpClient.delete(Divroll.getServerUrl()
+                        + usersUrl + "/" + getEntityId());
+                if(Divroll.getMasterKey() != null) {
+                    httpRequestWithBody.header(HEADER_MASTER_KEY, Divroll.getMasterKey());
+                }
+                if(Divroll.getAppId() != null) {
+                    httpRequestWithBody.header(HEADER_APP_ID, Divroll.getAppId());
+                }
+                if(Divroll.getApiKey() != null) {
+                    httpRequestWithBody.header(HEADER_API_KEY, Divroll.getApiKey());
+                }
+                if(Divroll.getAuthToken() != null) {
+                    httpRequestWithBody.header(HEADER_AUTH_TOKEN, Divroll.getAuthToken());
+                }
+
+                Single<HttpResponse<JsonNode>> responseSingle = httpRequestWithBody.asJson();
+                responseSingle.subscribe(new Consumer<HttpResponse<JsonNode>>() {
+                    @Override
+                    public void accept(HttpResponse<JsonNode> response) throws Exception {
+                        if(response.getStatus() >= 500) {
+                            emitter.onError(new ServerErrorRequestException());
+                        } else if(response.getStatus() == 401) {
+                            emitter.onError(new UnauthorizedRequestException(response.getStatusText(), response.getStatus()));
+                        } else if(response.getStatus() >= 400) {
+                            emitter.onError(new ClientErrorRequestException(response.getStatusText(), response.getStatus()));
+                        } else if(response.getStatus() == 204) {
+                            setEntityId(null);
+                            setAcl(null);
+                            setUsername(null);
+                            setRoles(null);
+                            setAcl(null);
+                            setPassword(null);
+                            setAuthToken(null);
+                            emitter.onSuccess(true);
+                        }
+                    }
+                });
+
+
+            }
+        });
+
     }
 
-    public void login(String username, String password) throws RequestException  {
-        setUsername(username);
-        setPassword(password);
-        GetRequest getRequest = (GetRequest) HttpClient.get(Divroll.getServerUrl() + loginUrl)
-                .queryString("username", getUsername())
-                .queryString("password", getPassword());
-        if(Divroll.getMasterKey() != null) {
-            getRequest.header(HEADER_MASTER_KEY, Divroll.getMasterKey());
-        }
-        if(Divroll.getAppId() != null) {
-            getRequest.header(HEADER_APP_ID, Divroll.getAppId());
-        }
-        if(Divroll.getApiKey() != null) {
-            getRequest.header(HEADER_API_KEY, Divroll.getApiKey());
-        }
-        HttpResponse<JsonNode> response = getRequest.asJson();
-        if(response.getStatus() == 404) {
+    public Single<DivrollUser> login(String username, String password) throws RequestException  {
+        return Single.create(new SingleOnSubscribe<DivrollUser>() {
+            @Override
+            public void subscribe(SingleEmitter<DivrollUser> emitter) throws Exception {
+                setUsername(username);
+                setPassword(password);
+                GetRequest getRequest = (GetRequest) HttpClient.get(Divroll.getServerUrl() + loginUrl)
+                        .queryString("username", getUsername())
+                        .queryString("password", getPassword());
+                if(Divroll.getMasterKey() != null) {
+                    getRequest.header(HEADER_MASTER_KEY, Divroll.getMasterKey());
+                }
+                if(Divroll.getAppId() != null) {
+                    getRequest.header(HEADER_APP_ID, Divroll.getAppId());
+                }
+                if(Divroll.getApiKey() != null) {
+                    getRequest.header(HEADER_API_KEY, Divroll.getApiKey());
+                }
+                Single<HttpResponse<JsonNode>> responseSingle = getRequest.asJson();
+                responseSingle.subscribe(new Consumer<HttpResponse<JsonNode>>() {
+                    @Override
+                    public void accept(HttpResponse<JsonNode> response) throws Exception {
+                        if(response.getStatus() >= 500) {
+                            emitter.onError(new ServerErrorRequestException());
+                        } else if(response.getStatus() == 404) {
+                            emitter.onError(new NotFoundRequestException(response.getStatusText(), response.getStatus()));
+                        } else if(response.getStatus() == 401) {
+                            emitter.onError(new UnauthorizedRequestException(response.getStatusText(), response.getStatus()));
+                        } else if(response.getStatus() == 200) {
+                            JsonNode body = response.getBody();
+                            JSONObject bodyObj = body.getObject();
+                            JSONObject user = bodyObj.getJSONObject("user");
+                            String entityId = user.getString("entityId");
+                            String webToken = user.getString("webToken");
+                            setEntityId(entityId);
+                            setAuthToken(webToken);
+                            Divroll.setAuthToken(webToken);
+                            emitter.onSuccess(copy());
+                        }
+                    }
+                });
+            }
+        });
 
-        } else if(response.getStatus() == 401) {
-            throw new UnauthorizedRequestException(response.getStatusText(), response.getStatus());
-        } else if(response.getStatus() == 200) {
-            JsonNode body = response.getBody();
-            JSONObject bodyObj = body.getObject();
-            JSONObject user = bodyObj.getJSONObject("user");
-            String entityId = user.getString("entityId");
-            String webToken = user.getString("webToken");
-            setEntityId(entityId);
-            setAuthToken(webToken);
-            Divroll.setAuthToken(webToken);
-        }
+
     }
 
     public void logout() {
@@ -591,4 +637,10 @@ public class DivrollUser extends DivrollBase {
     public void setRoles(List<DivrollRole> roles) {
         this.roles = roles;
     }
+
+    @Override
+    public DivrollUser copy() {
+        return this;
+    }
+
 }

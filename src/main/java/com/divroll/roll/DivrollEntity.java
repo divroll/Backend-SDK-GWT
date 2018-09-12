@@ -4,23 +4,19 @@ import com.divroll.roll.exception.DivrollException;
 import com.divroll.roll.exception.UnsupportedPropertyValueException;
 import com.divroll.roll.helper.Base64Utils;
 import com.divroll.roll.helper.JSON;
-import com.google.common.io.ByteStreams;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Window;
-import org.apache.tapestry.wml.Do;
+import io.reactivex.Single;
 import org.gwtproject.http.client.*;
-import org.gwtproject.http.client.exceptions.BadRequestException;
-import org.gwtproject.http.client.exceptions.NotFoundRequestException;
-import org.gwtproject.http.client.exceptions.UnauthorizedRequestException;
+import org.gwtproject.http.client.exceptions.*;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 
-public class DivrollEntity extends DivrollBase {
+public class DivrollEntity extends DivrollBase
+    implements Copyable<DivrollEntity> {
 
     private String entityStoreBase = "/entities/";
     private String entityId;
@@ -33,7 +29,7 @@ public class DivrollEntity extends DivrollBase {
         entityStoreBase = entityStoreBase + entityStore;
     }
 
-    public byte[] getBlobProperty(String blobKey) throws RequestException {
+    public Single<byte[]> getBlobProperty(String blobKey) throws RequestException {
         GetRequest getRequest = (GetRequest) HttpClient.get(Divroll.getServerUrl()
                 + entityStoreBase + "/" + getEntityId() + "/blobs/" + blobKey)
                 .queryString("encoding", "base64");
@@ -51,28 +47,30 @@ public class DivrollEntity extends DivrollBase {
             getRequest.header(HEADER_AUTH_TOKEN, Divroll.getAuthToken());
         }
 
-        HttpResponse<String> response = getRequest.asString();
-
-        if(response.getStatus() >= 500) {
-            throw new DivrollException("Internal Server error"); // TODO
-        } else if(response.getStatus() == 404) {
-            throw new NotFoundRequestException(response.getStatusText(), response.getStatus());
-        } else if(response.getStatus() == 401) {
-            throw new UnauthorizedRequestException(response.getStatusText(), response.getStatus());
-        } else if(response.getStatus() == 400) {
-            throw new BadRequestException(response.getStatusText(), response.getStatus());
-        } else if(response.getStatus() >= 400) {
-            throw new DivrollException("Client error"); // TODO
-        } else if(response.getStatus() == 200) {
-            if(response.getBody() != null) {
-                byte[] bytes = Base64Utils.fromBase64(response.getBody());
-                return bytes;
+        return getRequest.asString().map(response -> {
+            if(response.getStatus() >= 500) {
+                throw new ServerErrorRequestException();
+            } else if(response.getStatus() == 404) {
+                throw new NotFoundRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() == 401) {
+                throw new UnauthorizedRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() == 400) {
+                throw new BadRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() >= 400) {
+                throw new DivrollException("Client error"); // TODO
+            } else if(response.getStatus() == 200) {
+                if(response.getBody() != null) {
+                    byte[] bytes = Base64Utils.fromBase64(response.getBody());
+                    return bytes;
+                }
             }
-        }
-        return null;
+            return null;
+        });
+
+
     }
 
-    public void setBlobProperty(String blobKey, byte[] value) throws RequestException{
+    public Single<Boolean> setBlobProperty(String blobKey, byte[] value) throws RequestException{
         if(entityId == null) {
             throw new DivrollException("Save the entity first before setting a Blob property");
         }
@@ -113,24 +111,28 @@ public class DivrollEntity extends DivrollBase {
         httpRequestWithBody.header("Content-Type", "application/json");
 
         String base64 = Base64Utils.toBase64(value);
-        HttpResponse<String> response = httpRequestWithBody.body(base64).asString();
+        return httpRequestWithBody.body(base64).asString().map(response -> {
+            if(response.getStatus() >= 500) {
+                throw new ServerErrorRequestException();
+            } else if(response.getStatus() == 404) {
+                throw new NotFoundRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() == 401) {
+                throw new UnauthorizedRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() == 400) {
+                throw new BadRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() >= 400) {
+                throw new ClientErrorRequestException();
+            } else if(response.getStatus() == 201) {
+                //InputStream responseBody = response.getBody();
+                return true;
+            }
+            return false;
+        });
 
-        if(response.getStatus() >= 500) {
-            throw new DivrollException("Internal Server error"); // TODO
-        } else if(response.getStatus() == 404) {
-            throw new NotFoundRequestException(response.getStatusText(), response.getStatus());
-        } else if(response.getStatus() == 401) {
-            throw new UnauthorizedRequestException(response.getStatusText(), response.getStatus());
-        } else if(response.getStatus() == 400) {
-            throw new BadRequestException(response.getStatusText(), response.getStatus());
-        } else if(response.getStatus() >= 400) {
-            throw new DivrollException("Client error"); // TODO
-        } else if(response.getStatus() == 201) {
-            //InputStream responseBody = response.getBody();
-        }
+
     }
 
-    public void deleteBlobProperty(String blobKey) throws RequestException {
+    public Single<Boolean> deleteBlobProperty(String blobKey) throws RequestException {
         HttpRequestWithBody getRequest = (HttpRequestWithBody) HttpClient.delete(Divroll.getServerUrl()
                 + entityStoreBase + "/" + getEntityId() + "/blobs/" + blobKey);
         if(Divroll.getMasterKey() != null) {
@@ -146,21 +148,22 @@ public class DivrollEntity extends DivrollBase {
             getRequest.header(HEADER_AUTH_TOKEN, Divroll.getAuthToken());
         }
 
-        HttpResponse<JsonNode> response = getRequest.asJson();
+        return getRequest.asJson().map(response -> {
+            if(response.getStatus() >= 500) {
+                throw new ServerErrorRequestException();
+            } else if(response.getStatus() == 404) {
+                throw new NotFoundRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() == 401) {
+                throw new UnauthorizedRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() == 400) {
+                throw new BadRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() >= 400) {
+                throw new ClientErrorRequestException();
+            } else if(response.getStatus() == 200) {
 
-        if(response.getStatus() >= 500) {
-            throw new DivrollException("Internal Server error"); // TODO
-        } else if(response.getStatus() == 404) {
-            throw new NotFoundRequestException(response.getStatusText(), response.getStatus());
-        } else if(response.getStatus() == 401) {
-            throw new UnauthorizedRequestException(response.getStatusText(), response.getStatus());
-        } else if(response.getStatus() == 400) {
-            throw new BadRequestException(response.getStatusText(), response.getStatus());
-        } else if(response.getStatus() >= 400) {
-            throw new DivrollException("Client error"); // TODO
-        } else if(response.getStatus() == 200) {
-
-        }
+            }
+            return false;
+        });
     }
 
     public void setProperty(String propertyName, Object propertyValue) throws UnsupportedPropertyValueException {
@@ -300,7 +303,7 @@ public class DivrollEntity extends DivrollBase {
         return value;
     }
 
-    public List<DivrollEntity> links(String linkName) throws RequestException {
+    public Single<List<DivrollEntity>> links(String linkName) throws RequestException {
         List<DivrollEntity> entities = new LinkedList<DivrollEntity>();
         if(entityId == null) {
             throw new DivrollException("Save the entity first before getting links");
@@ -321,85 +324,81 @@ public class DivrollEntity extends DivrollBase {
         if(Divroll.getAuthToken() != null) {
             getRequest.header(HEADER_AUTH_TOKEN, Divroll.getAuthToken());
         }
+        return getRequest.asJson().map(response -> {
+            if(response.getStatus() >= 500) {
+                throw new ServerErrorRequestException();
+            } else if(response.getStatus() == 401) {
+                throw new UnauthorizedRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() == 400) {
+                throw new BadRequestException(response.getStatusText(), response.getStatus());
+            }  else if(response.getStatus() >= 400) {
+                throw new ClientErrorRequestException();
+            } else if(response.getStatus() == 200) {
+                JsonNode body = response.getBody();
+                JSONObject bodyObj = body.getObject();
+                JSONObject entitiesJSONObject = bodyObj.getJSONObject("entities");
+                JSONArray results = entitiesJSONObject.getJSONArray("results");
+                for(int i=0;i<results.length();i++){
+                    DivrollEntity divrollEntity = new DivrollEntity();
+                    JSONObject entityJSONObject = results.getJSONObject(i);
+                    Iterator<String> it = entityJSONObject.keySet().iterator();
+                    while(it.hasNext()) {
+                        String propertyKey = it.next();
+                        if( propertyKey.equals("entityId")) {
+                            divrollEntity.setEntityId(entityJSONObject.getString(propertyKey));
+                        }
+                        else if (propertyKey.equals("publicRead")) {
+                            try {
+                                Boolean value = entityJSONObject.getBoolean("publicRead");
+                                divrollEntity.getAcl().setPublicRead(value);
+                            } catch (Exception e) {
 
-        HttpResponse<JsonNode> response = getRequest.asJson();
+                            }
+                        } else if(propertyKey.equals("publicWrite")) {
+                            try {
+                                Boolean value = entityJSONObject.getBoolean("publicWrite");
+                                divrollEntity.getAcl().setPublicWrite(value);
+                            } catch (Exception e) {
 
+                            }
+                        } else if(propertyKey.equals("aclRead")) {
+                            try {
+                                List<String> value = JSON.aclJSONArrayToList(entityJSONObject.getJSONArray("aclRead"));
+                                divrollEntity.getAcl().setAclRead(value);
+                            } catch (Exception e) {
 
-        if(response.getStatus() >= 500) {
-            throwException(response);
-        } else if(response.getStatus() == 401) {
-            throw new UnauthorizedRequestException(response.getStatusText(), response.getStatus());
-        } else if(response.getStatus() == 400) {
-            throw new BadRequestException(response.getStatusText(), response.getStatus());
-        }  else if(response.getStatus() >= 400) {
-            throwException(response);
-        } else if(response.getStatus() == 200) {
+                            }
+                            try {
+                                List<String> value = Arrays.asList(entityJSONObject.getString("aclRead"));
+                                divrollEntity.getAcl().setAclRead(value);
+                            } catch (Exception e) {
 
-            JsonNode body = response.getBody();
-            JSONObject bodyObj = body.getObject();
-            JSONObject entitiesJSONObject = bodyObj.getJSONObject("entities");
-            JSONArray results = entitiesJSONObject.getJSONArray("results");
-            for(int i=0;i<results.length();i++){
-                DivrollEntity divrollEntity = new DivrollEntity();
-                JSONObject entityJSONObject = results.getJSONObject(i);
-                Iterator<String> it = entityJSONObject.keySet().iterator();
-                while(it.hasNext()) {
-                    String propertyKey = it.next();
-                    if( propertyKey.equals("entityId")) {
-                        divrollEntity.setEntityId(entityJSONObject.getString(propertyKey));
+                            }
+                        } else if(propertyKey.equals("aclWrite")) {
+                            try {
+                                List<String> value = JSON.aclJSONArrayToList(entityJSONObject.getJSONArray("aclWrite"));
+                                divrollEntity.getAcl().setAclWrite(value);
+                            } catch (Exception e) {
+
+                            }
+                            try {
+                                List<String> value = Arrays.asList(entityJSONObject.getString("aclWrite"));
+                                divrollEntity.getAcl().setAclWrite(value);
+                            } catch (Exception e) {
+
+                            }
+                        } else {
+                            divrollEntity.setProperty(propertyKey, entityJSONObject.get(propertyKey));
+                        }
                     }
-                    else if (propertyKey.equals("publicRead")) {
-                        try {
-                            Boolean value = entityJSONObject.getBoolean("publicRead");
-                            divrollEntity.getAcl().setPublicRead(value);
-                        } catch (Exception e) {
-
-                        }
-                    } else if(propertyKey.equals("publicWrite")) {
-                        try {
-                            Boolean value = entityJSONObject.getBoolean("publicWrite");
-                            divrollEntity.getAcl().setPublicWrite(value);
-                        } catch (Exception e) {
-
-                        }
-                    } else if(propertyKey.equals("aclRead")) {
-                        try {
-                            List<String> value = JSON.aclJSONArrayToList(entityJSONObject.getJSONArray("aclRead"));
-                            divrollEntity.getAcl().setAclRead(value);
-                        } catch (Exception e) {
-
-                        }
-                        try {
-                            List<String> value = Arrays.asList(entityJSONObject.getString("aclRead"));
-                            divrollEntity.getAcl().setAclRead(value);
-                        } catch (Exception e) {
-
-                        }
-                    } else if(propertyKey.equals("aclWrite")) {
-                        try {
-                            List<String> value = JSON.aclJSONArrayToList(entityJSONObject.getJSONArray("aclWrite"));
-                            divrollEntity.getAcl().setAclWrite(value);
-                        } catch (Exception e) {
-
-                        }
-                        try {
-                            List<String> value = Arrays.asList(entityJSONObject.getString("aclWrite"));
-                            divrollEntity.getAcl().setAclWrite(value);
-                        } catch (Exception e) {
-
-                        }
-                    } else {
-                        divrollEntity.setProperty(propertyKey, entityJSONObject.get(propertyKey));
-                    }
+                    entities.add(divrollEntity);
                 }
-                entities.add(divrollEntity);
             }
-
-        }
-        return entities;
+            return entities;
+        });
     }
 
-    public List<DivrollEntity> getEntities(String linkName) throws RequestException  {
+    public Single<List<DivrollEntity>> getEntities(String linkName) throws RequestException  {
         List<DivrollEntity> entities = new LinkedList<DivrollEntity>();
         if(entityId == null) {
             throw new DivrollException("Save the entity first before getting links");
@@ -421,94 +420,96 @@ public class DivrollEntity extends DivrollBase {
             getRequest.header(HEADER_AUTH_TOKEN, Divroll.getAuthToken());
         }
 
-        HttpResponse<JsonNode> response = getRequest.asJson();
+        return getRequest.asJson().map(response -> {
+            if(response.getStatus() >= 500) {
+                throw new ServerErrorRequestException();
+            } else if(response.getStatus() == 404) {
+                throw new NotFoundRequestException(response.getStatusText(), response.getStatus());
+            }  else if(response.getStatus() == 401) {
+                throw new UnauthorizedRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() == 400) {
+                throw new BadRequestException(response.getStatusText(), response.getStatus());
+            }  else if(response.getStatus() >= 400) {
+                throw new ClientErrorRequestException();
+            } else if(response.getStatus() == 200) {
+                JsonNode body = response.getBody();
+                JSONObject bodyObj = body.getObject();
+                JSONObject entityJsonObject = bodyObj.getJSONObject("entities");
+                JSONObject resultJsonObject = entityJsonObject.getJSONObject("results");
+                String entityId = entityJsonObject.getString("entityId");
 
-        if(response.getStatus() >= 500) {
-            throwException(response);
-        } else if(response.getStatus() == 404) {
-            throw new NotFoundRequestException(response.getStatusText(), response.getStatus());
-        }  else if(response.getStatus() == 401) {
-            throw new UnauthorizedRequestException(response.getStatusText(), response.getStatus());
-        } else if(response.getStatus() == 400) {
-            throw new BadRequestException(response.getStatusText(), response.getStatus());
-        }  else if(response.getStatus() >= 400) {
-            throwException(response);
-        } else if(response.getStatus() == 200) {
-            JsonNode body = response.getBody();
-            JSONObject bodyObj = body.getObject();
-            JSONObject entityJsonObject = bodyObj.getJSONObject("entities");
-            JSONObject resultJsonObject = entityJsonObject.getJSONObject("results");
-            String entityId = entityJsonObject.getString("entityId");
+                Boolean publicRead = null;
+                Boolean publicWrite = null;
 
-            Boolean publicRead = null;
-            Boolean publicWrite = null;
+                try {
+                    publicWrite = entityJsonObject.getBoolean("publicWrite");
+                } catch (Exception e) {
 
-            try {
-                publicWrite = entityJsonObject.getBoolean("publicWrite");
-            } catch (Exception e) {
-
-            }
-
-            try {
-                publicRead = entityJsonObject.getBoolean("publicRead");
-            } catch (Exception e) {
-
-            }
-
-            List<String> aclWriteList = null;
-            List<String> aclReadList = null;
-
-            try {
-                aclWriteList = JSON.aclJSONArrayToList(entityJsonObject.getJSONArray("aclWrite"));
-            } catch (Exception e) {
-
-            }
-
-            try {
-                aclReadList = JSON.aclJSONArrayToList(entityJsonObject.getJSONArray("aclRead"));
-            } catch (Exception e) {
-
-            }
-
-            try {
-                aclWriteList = Arrays.asList(entityJsonObject.getString("aclWrite"));
-            } catch (Exception e) {
-
-            }
-
-            try {
-                aclReadList = Arrays.asList(entityJsonObject.getString("aclRead"));
-            } catch (Exception e) {
-
-            }
-
-            Iterator<String> it = entityJsonObject.keySet().iterator();
-            while(it.hasNext()) {
-                String propertyKey = it.next();
-                if( propertyKey.equals("entityId")) {
-                    setEntityId(entityJsonObject.getString(propertyKey));
-                } else if (propertyKey.equals("publicRead")
-                        || propertyKey.equals("publicWrite")
-                        || propertyKey.equals("aclRead")
-                        || propertyKey.equals("aclWrite")) {
-                    // skip
-                } else {
-                    Object obj = entityJsonObject.get(propertyKey);
-                    divrollEntity.setProperty(propertyKey, obj);
                 }
+
+                try {
+                    publicRead = entityJsonObject.getBoolean("publicRead");
+                } catch (Exception e) {
+
+                }
+
+                List<String> aclWriteList = null;
+                List<String> aclReadList = null;
+
+                try {
+                    aclWriteList = JSON.aclJSONArrayToList(entityJsonObject.getJSONArray("aclWrite"));
+                } catch (Exception e) {
+
+                }
+
+                try {
+                    aclReadList = JSON.aclJSONArrayToList(entityJsonObject.getJSONArray("aclRead"));
+                } catch (Exception e) {
+
+                }
+
+                try {
+                    aclWriteList = Arrays.asList(entityJsonObject.getString("aclWrite"));
+                } catch (Exception e) {
+
+                }
+
+                try {
+                    aclReadList = Arrays.asList(entityJsonObject.getString("aclRead"));
+                } catch (Exception e) {
+
+                }
+
+                Iterator<String> it = entityJsonObject.keySet().iterator();
+                while(it.hasNext()) {
+                    String propertyKey = it.next();
+                    if( propertyKey.equals("entityId")) {
+                        setEntityId(entityJsonObject.getString(propertyKey));
+                    } else if (propertyKey.equals("publicRead")
+                            || propertyKey.equals("publicWrite")
+                            || propertyKey.equals("aclRead")
+                            || propertyKey.equals("aclWrite")) {
+                        // skip
+                    } else {
+                        Object obj = entityJsonObject.get(propertyKey);
+                        divrollEntity.setProperty(propertyKey, obj);
+                    }
+                }
+
+                DivrollACL acl = new DivrollACL(aclReadList, aclWriteList);
+                acl.setPublicWrite(publicWrite);
+                acl.setPublicRead(publicRead);
+                divrollEntity.setEntityId(entityId);
+                divrollEntity.setAcl(acl);
+
             }
+            return entities;
+        });
 
-            DivrollACL acl = new DivrollACL(aclReadList, aclWriteList);
-            acl.setPublicWrite(publicWrite);
-            acl.setPublicRead(publicRead);
-            divrollEntity.setEntityId(entityId);
-            divrollEntity.setAcl(acl);
 
-        }
-        return entities;
     }
 
-    public void addLink(String linkName, String entityId) throws RequestException  {
+    public Single<Boolean> addLink(String linkName, String entityId) throws RequestException  {
         if(entityId == null) {
             throw new DivrollException("Save the entity first before creating a link");
         }
@@ -546,22 +547,26 @@ public class DivrollEntity extends DivrollBase {
         httpRequestWithBody.header("X-Divroll-ACL-Write", aclWrite.toString());
         httpRequestWithBody.header("Content-Type", "application/json");
 
-        HttpResponse<JsonNode> response =  httpRequestWithBody.asJson();
-        if(response.getStatus() >= 500) {
-            throw new HttpRequestException(response.getStatusText(),response.getStatus()); // TODO
-        } else if(response.getStatus() == 404) {
-            throw new NotFoundRequestException(response.getStatusText(), response.getStatus());
-        } else if(response.getStatus() == 401) {
-            throw new UnauthorizedRequestException(response.getStatusText(), response.getStatus());
-        } else if(response.getStatus() == 400) {
-            throw new BadRequestException(response.getStatusText(), response.getStatus());
-        } else if(response.getStatus() >= 400) {
-            throw new DivrollException("Client error"); // TODO
-        } else if(response.getStatus() == 201) {
-        }
+        return httpRequestWithBody.asJson().map(response -> {
+            if(response.getStatus() >= 500) {
+                throw new ServerErrorRequestException();
+            } else if(response.getStatus() == 404) {
+                throw new NotFoundRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() == 401) {
+                throw new UnauthorizedRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() == 400) {
+                throw new BadRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() >= 400) {
+                throw new ClientErrorRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() == 201) {
+                return true;
+            }
+            return false;
+        });
+
     }
 
-    public void removeLink(String linkName, String entityId) throws RequestException  {
+    public Single<Boolean> removeLink(String linkName, String entityId) throws RequestException  {
         if(entityId == null) {
             throw new DivrollException("Save the entity first before removing a link");
         }
@@ -599,22 +604,26 @@ public class DivrollEntity extends DivrollBase {
         httpRequestWithBody.header("X-Divroll-ACL-Write", aclWrite.toString());
         httpRequestWithBody.header("Content-Type", "application/json");
 
-        HttpResponse<JsonNode> response =  httpRequestWithBody.asJson();
-        if(response.getStatus() >= 500) {
-            throw new HttpRequestException(response.getStatusText(),response.getStatus()); // TODO
-        } else if(response.getStatus() == 404) {
-            throw new NotFoundRequestException(response.getStatusText(), response.getStatus());
-        } else if(response.getStatus() == 401) {
-            throw new UnauthorizedRequestException(response.getStatusText(), response.getStatus());
-        } else if(response.getStatus() == 400) {
-            throw new BadRequestException(response.getStatusText(), response.getStatus());
-        } else if(response.getStatus() >= 400) {
-            throw new DivrollException("Client error"); // TODO
-        } else if(response.getStatus() == 201) {
-        }
+        return httpRequestWithBody.asJson().map(response -> {
+            if(response.getStatus() >= 500) {
+                throw new ServerErrorRequestException(response.getStatusText(),response.getStatus());
+            } else if(response.getStatus() == 404) {
+                throw new NotFoundRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() == 401) {
+                throw new UnauthorizedRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() == 400) {
+                throw new BadRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() >= 400) {
+                throw new ClientErrorRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() == 200) {
+                return true;
+            }
+            return false;
+        });
+
     }
 
-    public void removeLinks(String linkName) throws RequestException  {
+    public Single<Boolean> removeLinks(String linkName) throws RequestException  {
         if(entityId == null) {
             throw new DivrollException("Save the entity first before removing links");
         }
@@ -652,19 +661,24 @@ public class DivrollEntity extends DivrollBase {
         httpRequestWithBody.header("X-Divroll-ACL-Write", aclWrite.toString());
         httpRequestWithBody.header("Content-Type", "application/json");
 
-        HttpResponse<JsonNode> response =  httpRequestWithBody.asJson();
-        if(response.getStatus() >= 500) {
-            //throw new DivrollException(response.getStatusText(),response.getStatus()); // TODO
-        } else if(response.getStatus() == 404) {
-            throw new NotFoundRequestException(response.getStatusText(),response.getStatus());
-        } else if(response.getStatus() == 401) {
-            throw new UnauthorizedRequestException(response.getStatusText(),response.getStatus());
-        } else if(response.getStatus() == 400) {
-            throw new BadRequestException(response.getStatusText(),response.getStatus());
-        } else if(response.getStatus() >= 400) {
-            throw new DivrollException("Client error"); // TODO
-        } else if(response.getStatus() == 201) {
-        }
+        return httpRequestWithBody.asJson().map(response -> {
+            if(response.getStatus() >= 500) {
+                throw new ServerErrorRequestException();
+            } else if(response.getStatus() == 404){
+                throw new NotFoundRequestException(response.getStatusText(),response.getStatus());
+            } else if(response.getStatus() == 401) {
+                throw new UnauthorizedRequestException(response.getStatusText(),response.getStatus());
+            } else if(response.getStatus() == 400) {
+                throw new BadRequestException(response.getStatusText(),response.getStatus());
+            } else if(response.getStatus() >= 400) {
+                throw new ClientErrorRequestException(response.getStatusText(),response.getStatus());
+            } else if(response.getStatus() == 200) {
+                return true;
+            }
+            return false;
+        });
+
+
     }
 
     public DivrollACL getAcl() {
@@ -683,7 +697,7 @@ public class DivrollEntity extends DivrollBase {
         this.entityId = entityId;
     }
 
-    public void create() throws RequestException {
+    public Single<DivrollEntity> create() throws RequestException {
         HttpRequestWithBody httpRequestWithBody = HttpClient.post(Divroll.getServerUrl() + entityStoreBase);
         if(Divroll.getMasterKey() != null) {
             httpRequestWithBody.header(HEADER_MASTER_KEY, Divroll.getMasterKey());
@@ -727,28 +741,28 @@ public class DivrollEntity extends DivrollBase {
         httpRequestWithBody.header("X-Divroll-ACL-Write", aclWrite.toString());
         httpRequestWithBody.header("Content-Type", "application/json");
 
+        return httpRequestWithBody.body(body).asJson().map(response -> {
+            if(response.getStatus() >= 500) {
+                throw new HttpRequestException(response.getStatusText(),response.getStatus());
+            } else if(response.getStatus() == 401) {
+                throw new UnauthorizedRequestException(response.getStatusText(),response.getStatus());
+            } else if(response.getStatus() == 400) {
+                throw new BadRequestException(response.getStatusText(),response.getStatus());
+            } else if(response.getStatus() >= 400) {
+                throw new ClientErrorRequestException(response.getStatusText(),response.getStatus());
+            } else if(response.getStatus() == 201) {
+                JsonNode responseBody = response.getBody();
+                JSONObject bodyObj = responseBody.getObject();
+                JSONObject entity = bodyObj.getJSONObject("entity");
+                String entityId = entity.getString("entityId");
+                setEntityId(entityId);
+            }
+            return copy();
+        });
 
-        Window.alert("BODY: " + body.toString());
-        HttpResponse<JsonNode> response =  httpRequestWithBody.body(body).asJson();
-
-
-
-        if(response.getStatus() >= 500) {
-            throw new HttpRequestException(response.getStatusText(),response.getStatus());
-        } else if(response.getStatus() == 401) {
-            throw new UnauthorizedRequestException(response.getStatusText(),response.getStatus());
-        } else if(response.getStatus() >= 401) {
-            throw new UnauthorizedRequestException(response.getStatusText(),response.getStatus());
-        } else if(response.getStatus() == 201) {
-            JsonNode responseBody = response.getBody();
-            JSONObject bodyObj = responseBody.getObject();
-            JSONObject entity = bodyObj.getJSONObject("entity");
-            String entityId = entity.getString("entityId");
-            setEntityId(entityId);
-        }
     }
 
-    public boolean update() throws RequestException {
+    public Single<Boolean> update() throws RequestException {
         String completeUrl = Divroll.getServerUrl() + entityStoreBase + "/" + getEntityId();
         HttpRequestWithBody httpRequestWithBody = HttpClient.put(completeUrl);
         if(Divroll.getMasterKey() != null) {
@@ -794,29 +808,28 @@ public class DivrollEntity extends DivrollBase {
         httpRequestWithBody.header("Content-Type", "application/json");
 
 
+        return httpRequestWithBody.body(body).asJson().map(response -> {
+            if(response.getStatus() >= 500) {
+                throw new ServerErrorRequestException();
+            } else if(response.getStatus() == 401) {
+                throw new UnauthorizedRequestException(response.getStatusText(),response.getStatus());
+            } else if(response.getStatus() == 400) {
+                throw new BadRequestException(response.getStatusText(),response.getStatus());
+            } else if(response.getStatus() == 201) {
+                JsonNode responseBody = response.getBody();
+                JSONObject bodyObj = responseBody.getObject();
+                JSONObject entity = bodyObj.getJSONObject("entity");
+                String entityId = entity.getString("entityId");
+                setEntityId(entityId);
+                return true;
+            }
+            return false;
+        });
 
-        HttpResponse<JsonNode> response =  httpRequestWithBody.body(body).asJson();
 
-
-
-        if(response.getStatus() >= 500) {
-            //throw new DivrollException(response.getStatusText(),response.getStatus());
-        } else if(response.getStatus() == 401) {
-            throw new UnauthorizedRequestException(response.getStatusText(),response.getStatus());
-        } else if(response.getStatus() >= 401) {
-            throw new HttpRequestException(response.getStatusText(),response.getStatus());
-        } else if(response.getStatus() == 201) {
-            JsonNode responseBody = response.getBody();
-            JSONObject bodyObj = responseBody.getObject();
-            JSONObject entity = bodyObj.getJSONObject("entity");
-            String entityId = entity.getString("entityId");
-            setEntityId(entityId);
-            return true;
-        }
-        return false;
     }
 
-    public void retrieve() throws RequestException {
+    public Single<DivrollEntity> retrieve() throws RequestException {
         String completeUrl = Divroll.getServerUrl() + entityStoreBase + "/" + getEntityId();
         GetRequest getRequest = (GetRequest) HttpClient.get(completeUrl);
 
@@ -833,104 +846,103 @@ public class DivrollEntity extends DivrollBase {
             getRequest.header(HEADER_AUTH_TOKEN, Divroll.getAuthToken());
         }
 
-        HttpResponse<JsonNode> response = getRequest.asJson();
+        return getRequest.asJson().map(response -> {
+            if(response.getStatus() >= 500) {
+                throwException(response);
+            } else if(response.getStatus() == 404) {
+                throw new NotFoundRequestException(response.getStatusText(),response.getStatus());
+            }  else if(response.getStatus() == 401) {
+                throw new UnauthorizedRequestException(response.getStatusText(),response.getStatus());
+            } else if(response.getStatus() == 400) {
+                throw new BadRequestException(response.getStatusText(),response.getStatus());
+            }  else if(response.getStatus() >= 400) {
+                throwException(response);
+            } else if(response.getStatus() == 200) {
+                JsonNode body = response.getBody();
+                JSONObject bodyObj = body.getObject();
+                JSONObject entityJsonObject = bodyObj.getJSONObject("entity");
+                String entityId = entityJsonObject.getString("entityId");
 
-        Window.alert(response.getBody().getObject().toString());
+                Boolean publicRead = null;
+                Boolean publicWrite = null;
 
-        if(response.getStatus() >= 500) {
-            throwException(response);
-        } else if(response.getStatus() == 404) {
-            throw new NotFoundRequestException(response.getStatusText(),response.getStatus());
-        }  else if(response.getStatus() == 401) {
-            throw new UnauthorizedRequestException(response.getStatusText(),response.getStatus());
-        } else if(response.getStatus() == 400) {
-            throw new BadRequestException(response.getStatusText(),response.getStatus());
-        }  else if(response.getStatus() >= 400) {
-            throwException(response);
-        } else if(response.getStatus() == 200) {
-            JsonNode body = response.getBody();
-            JSONObject bodyObj = body.getObject();
-            JSONObject entityJsonObject = bodyObj.getJSONObject("entity");
-            String entityId = entityJsonObject.getString("entityId");
+                try {
+                    publicWrite = entityJsonObject.getBoolean("publicWrite");
+                } catch (Exception e) {
 
-            Boolean publicRead = null;
-            Boolean publicWrite = null;
-
-            try {
-                publicWrite = entityJsonObject.getBoolean("publicWrite");
-            } catch (Exception e) {
-
-            }
-
-            try {
-                publicRead = entityJsonObject.getBoolean("publicRead");
-            } catch (Exception e) {
-
-            }
-
-            List<String> aclWriteList = null;
-            List<String> aclReadList = null;
-
-            try {
-                aclWriteList = JSON.aclJSONArrayToList(entityJsonObject.getJSONArray("aclWrite"));
-                Window.alert("WRITE------->"  + aclWriteList.toString());
-            } catch (Exception e) {
-
-            }
-
-            try {
-                aclReadList = JSON.aclJSONArrayToList(entityJsonObject.getJSONArray("aclRead"));
-                Window.alert("READ------->"  + aclReadList.toString());
-            } catch (Exception e) {
-
-            }
-
-            try {
-                JSONObject jsonObject = entityJsonObject.getJSONObject("aclWrite");
-                if(aclWriteList == null) {
-                    aclWriteList = Arrays.asList(jsonObject.getString("entityId"));
                 }
-            } catch (Exception e) {
 
-            }
-            try {
-                JSONObject jsonObject = entityJsonObject.getJSONObject("aclRead");
-                if(aclReadList == null) {
-                    aclReadList = Arrays.asList(jsonObject.getString("entityId"));
+                try {
+                    publicRead = entityJsonObject.getBoolean("publicRead");
+                } catch (Exception e) {
+
                 }
-            } catch (Exception e) {
 
-            }
+                List<String> aclWriteList = null;
+                List<String> aclReadList = null;
 
-            Iterator<String> it = entityJsonObject.keySet().iterator();
-            while(it.hasNext()) {
-                String propertyKey = it.next();
-                if( propertyKey.equals("entityId")) {
-                    setEntityId(entityJsonObject.getString(propertyKey));
-                } else if (propertyKey.equals("publicRead")
-                        || propertyKey.equals("publicWrite")
-                        || propertyKey.equals("aclRead")
-                        || propertyKey.equals("aclWrite")) {
-                    // skip
-                } else {
-                    Object obj = entityJsonObject.get(propertyKey);
-                    Window.alert("Property->" + propertyKey);
-                    Window.alert("Object->" + obj.toString());
-                    Window.alert("Class->" + obj.getClass().getName());
-                    entityObj.put(propertyKey, obj);
+                try {
+                    aclWriteList = JSON.aclJSONArrayToList(entityJsonObject.getJSONArray("aclWrite"));
+                    Window.alert("WRITE------->"  + aclWriteList.toString());
+                } catch (Exception e) {
+
                 }
-            }
 
-            DivrollACL acl = new DivrollACL(aclReadList, aclWriteList);
-            acl.setPublicWrite(publicWrite);
-            acl.setPublicRead(publicRead);
-            setEntityId(entityId);
-            setAcl(acl);
-            Window.alert("------------------------>" + entityObj.toString());
-        }
+                try {
+                    aclReadList = JSON.aclJSONArrayToList(entityJsonObject.getJSONArray("aclRead"));
+                    Window.alert("READ------->"  + aclReadList.toString());
+                } catch (Exception e) {
+
+                }
+
+                try {
+                    JSONObject jsonObject = entityJsonObject.getJSONObject("aclWrite");
+                    if(aclWriteList == null) {
+                        aclWriteList = Arrays.asList(jsonObject.getString("entityId"));
+                    }
+                } catch (Exception e) {
+
+                }
+                try {
+                    JSONObject jsonObject = entityJsonObject.getJSONObject("aclRead");
+                    if(aclReadList == null) {
+                        aclReadList = Arrays.asList(jsonObject.getString("entityId"));
+                    }
+                } catch (Exception e) {
+
+                }
+
+                Iterator<String> it = entityJsonObject.keySet().iterator();
+                while(it.hasNext()) {
+                    String propertyKey = it.next();
+                    if( propertyKey.equals("entityId")) {
+                        setEntityId(entityJsonObject.getString(propertyKey));
+                    } else if (propertyKey.equals("publicRead")
+                            || propertyKey.equals("publicWrite")
+                            || propertyKey.equals("aclRead")
+                            || propertyKey.equals("aclWrite")) {
+                        // skip
+                    } else {
+                        Object obj = entityJsonObject.get(propertyKey);
+                        Window.alert("Property->" + propertyKey);
+                        Window.alert("Object->" + obj.toString());
+                        Window.alert("Class->" + obj.getClass().getName());
+                        entityObj.put(propertyKey, obj);
+                    }
+                }
+
+                DivrollACL acl = new DivrollACL(aclReadList, aclWriteList);
+                acl.setPublicWrite(publicWrite);
+                acl.setPublicRead(publicRead);
+                setEntityId(entityId);
+                setAcl(acl);
+            }
+            return copy();
+        });
+
     }
 
-    public boolean delete() throws RequestException{
+    public Single<Boolean> delete() throws RequestException{
         String completeUrl = Divroll.getServerUrl() + entityStoreBase + "/" + getEntityId();
         HttpRequestWithBody httpRequestWithBody = HttpClient.delete(completeUrl);
         if(Divroll.getMasterKey() != null) {
@@ -945,19 +957,24 @@ public class DivrollEntity extends DivrollBase {
         if(Divroll.getAuthToken() != null) {
             httpRequestWithBody.header(HEADER_AUTH_TOKEN, Divroll.getAuthToken());
         }
-        HttpResponse<JsonNode> response = httpRequestWithBody.asJson();
-        if(response.getStatus() >= 500) {
-            throwException(response);
-        } else if(response.getStatus() == 401) {
-            throw new UnauthorizedRequestException(response.getStatusText(),response.getStatus());
-        } else if(response.getStatus() == 400) {
-            throw new BadRequestException(response.getStatusText(),response.getStatus());
-        } else if(response.getStatus() >= 400) {
-            throwException(response);
-        } else if(response.getStatus() == 204) {
-            return true;
-        }
-        return false;
+        return httpRequestWithBody.asJson().map(response -> {
+            if(response.getStatus() >= 500) {
+                throw new ServerErrorRequestException();
+            } else if(response.getStatus() == 401) {
+                throw new UnauthorizedRequestException(response.getStatusText(),response.getStatus());
+            } else if(response.getStatus() == 400) {
+                throw new BadRequestException(response.getStatusText(),response.getStatus());
+            } else if(response.getStatus() >= 400) {
+                throw new ClientErrorRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() == 204) {
+                return true;
+            }
+            return false;
+        });
     }
 
+    @Override
+    public DivrollEntity copy() {
+        return this;
+    }
 }
