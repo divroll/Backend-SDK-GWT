@@ -1,4 +1,0 @@
-<module rename-to="sdkTest" >
-  <inherits name="com.divroll.sdk" />
-  <source path="roll" />
-</module>
