@@ -2,7 +2,7 @@ package com.divroll.backend.sdk;
 
 public class Divroll {
 
-    private static String divrollServerUrl = "http://localhost:8080/divroll";
+    private static String divrollServerUrl;
     private static String applicationId;
     private static String applicationKey;
     private static String applicationMasterKey;
@@ -22,6 +22,10 @@ public class Divroll {
     }
 
     public static String getServerUrl() {
+        divrollServerUrl = getDivrollServerUrlFromJs();
+        if(divrollServerUrl == null) {
+            divrollServerUrl = "http://localhost:8080/divroll";
+        }
         return divrollServerUrl;
     }
 
@@ -51,5 +55,9 @@ public class Divroll {
     public static void setAuthToken(String authToken) {
         authenticationToken = authToken;
     }
+
+    private static native String getDivrollServerUrlFromJs() /*-{
+        return $wnd.divrollServerUrl;
+    }-*/;
 
 }
