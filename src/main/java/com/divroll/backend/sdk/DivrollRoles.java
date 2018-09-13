@@ -86,6 +86,15 @@ public class DivrollRoles extends DivrollBase
                 JSONObject bodyObj = body.getObject();
                 JSONObject roles = bodyObj.getJSONObject("roles");
                 JSONArray results = roles.getJSONArray("results");
+
+                if(results == null) {
+                    JSONObject singleResultObject = roles.getJSONObject("results");
+                    if(singleResultObject != null) {
+                        results = new JSONArray();
+                        results.put(singleResultObject);
+                    }
+                }
+
                 for(int i=0;i<results.length();i++){
                     JSONObject roleObj = results.getJSONObject(i);
                     String entityId = roleObj.getString("entityId");
