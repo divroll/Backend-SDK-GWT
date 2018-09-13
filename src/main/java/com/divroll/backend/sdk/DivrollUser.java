@@ -18,6 +18,7 @@ import java.util.List;
 
 import static com.divroll.backend.sdk.helper.ACLHelper.aclReadFrom;
 import static com.divroll.backend.sdk.helper.ACLHelper.aclWriteFrom;
+import static com.divroll.backend.sdk.helper.RoleHelper.rolesFrom;
 
 public class DivrollUser extends DivrollBase
     implements Copyable<DivrollUser> {
@@ -202,31 +203,7 @@ public class DivrollUser extends DivrollBase
                             Boolean publicWrite = userJsonObj.get("publicWrite") != null ? userJsonObj.getBoolean("publicWrite") : null;
                             List<String> aclWriteList = aclWriteFrom(userJsonObj);
                             List<String> aclReadList =  aclReadFrom(userJsonObj);
-
-                            List<DivrollRole> divrollRoles = null;
-                            try {
-                                Object roles = userJsonObj.get("roles");
-                                if(roles instanceof JSONArray) {
-                                    divrollRoles = new LinkedList<DivrollRole>();
-                                    JSONArray jsonArray = (JSONArray) roles;
-                                    for(int i=0;i<jsonArray.length();i++) {
-                                        JSONObject jsonObject = jsonArray.getJSONObject(i);
-                                        String roleId = jsonObject.getString("entityId");
-                                        DivrollRole divrollRole = new DivrollRole();
-                                        divrollRole.setEntityId(roleId);
-                                        divrollRoles.add(divrollRole);
-                                    }
-                                } else if(roles instanceof JSONObject) {
-                                    divrollRoles = new LinkedList<DivrollRole>();
-                                    JSONObject jsonObject = (JSONObject) roles;
-                                    String roleId = jsonObject.getString("entityId");
-                                    DivrollRole divrollRole = new DivrollRole();
-                                    divrollRole.setEntityId(roleId);
-                                    divrollRoles.add(divrollRole);
-                                }
-                            } catch (Exception e) {
-                                // do nothing
-                            }
+                            List<DivrollRole> divrollRoles = rolesFrom(userJsonObj);
 
                             DivrollACL acl = new DivrollACL(aclReadList, aclWriteList);
                             acl.setPublicWrite(publicWrite);
@@ -351,31 +328,7 @@ public class DivrollUser extends DivrollBase
                             Boolean publicWrite = responseUser.getBoolean("publicWrite");
                             List<String> aclWriteList = aclWriteFrom(responseUser);
                             List<String> aclReadList =  aclReadFrom(responseUser);
-
-                            List<DivrollRole> divrollRoles = null;
-                            try {
-                                Object roleObjects = userObj.get("roles");
-                                if(roleObjects instanceof JSONArray) {
-                                    divrollRoles = new LinkedList<DivrollRole>();
-                                    JSONArray jsonArray = (JSONArray) roles;
-                                    for(int i=0;i<jsonArray.length();i++) {
-                                        JSONObject jsonObject = jsonArray.getJSONObject(i);
-                                        String roleId = jsonObject.getString("entityId");
-                                        DivrollRole divrollRole = new DivrollRole();
-                                        divrollRole.setEntityId(roleId);
-                                        divrollRoles.add(divrollRole);
-                                    }
-                                } else if(roleObjects instanceof JSONObject) {
-                                    divrollRoles = new LinkedList<DivrollRole>();
-                                    JSONObject jsonObject = (JSONObject) roleObjects;
-                                    String roleId = jsonObject.getString("entityId");
-                                    DivrollRole divrollRole = new DivrollRole();
-                                    divrollRole.setEntityId(roleId);
-                                    divrollRoles.add(divrollRole);
-                                }
-                            } catch (Exception e) {
-
-                            }
+                            List<DivrollRole> divrollRoles = rolesFrom(userObj);
 
                             DivrollACL acl = new DivrollACL(aclReadList, aclWriteList);
                             acl.setPublicRead(publicRead);
