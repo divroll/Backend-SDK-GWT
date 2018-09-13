@@ -35,19 +35,21 @@ public class DivrollUsersTest extends GWTTestCase {
     public void testGetUsers() throws RequestException {
         TestData.getNewApplication().subscribe(testApplication -> {
             Divroll.initialize(testApplication.getAppId(), testApplication.getApiToken(), testApplication.getMasterKey());
-
             DataFactory df = new DataFactory();
+            List<DivrollUser> list = new LinkedList<>();
             for(int i=0;i<100;i++) {
                 DivrollUser divrollUser = new DivrollUser();
-                divrollUser.create(df.getEmailAddress(), "password");
+                divrollUser.create(df.getEmailAddress(), "password").subscribe(createdUser -> {
+                    list.add(divrollUser);
+                    if(list.size() == 100) {
+                        DivrollUsers users = new DivrollUsers();
+                        users.query().subscribe(divrollUsers -> {
+                            assertEquals(100, divrollUsers.getUsers().size());
+                            finishTest();
+                        });
+                    }
+                });
             }
-
-            DivrollUsers users = new DivrollUsers();
-            users.query().subscribe(divrollUsers -> {
-                assertEquals(100, divrollUsers.getUsers().size());
-                finishTest();
-            });
-
         });
         delayTestFinish(DELAY);
 
