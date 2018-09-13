@@ -2,6 +2,7 @@ package com.divroll.backend.sdk;
 
 import com.divroll.backend.sdk.exception.DivrollException;
 import com.divroll.backend.sdk.helper.JSON;
+import com.divroll.http.client.exceptions.*;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.json.client.JSONNull;
 import elemental.client.Browser;
@@ -10,10 +11,6 @@ import com.divroll.http.client.GetRequest;
 import com.divroll.http.client.HttpClient;
 import com.divroll.http.client.HttpRequestWithBody;
 import com.divroll.http.client.JsonNode;
-import com.divroll.http.client.exceptions.BadRequestException;
-import com.divroll.http.client.exceptions.ClientErrorRequestException;
-import com.divroll.http.client.exceptions.ServerErrorRequestException;
-import com.divroll.http.client.exceptions.UnauthorizedRequestException;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -87,11 +84,11 @@ public class DivrollRole extends DivrollBase
             } else if(response.getStatus() == 400) {
                 throw new BadRequestException(response.getStatusText(), response.getStatus());
             } else if(response.getStatus() == 404) {
-                throw new DivrollException(response.getStatusText());
+                throw new NotFoundRequestException(response.getStatusText(), response.getStatus());
             } else if(response.getStatus() == 401) {
                 throw new UnauthorizedRequestException(response.getStatusText(),response.getStatus());
-            } else if(response.getStatus() == 401) {
-                throw new DivrollException(response.getStatusText());
+            } else if(response.getStatus() >= 400) {
+                throw new ClientErrorRequestException(response.getStatusText(), response.getStatus());
             } else if(response.getStatus() == 201) {
                 JsonNode responseBody = response.getBody();
                 JSONObject bodyObj = responseBody.getObject();

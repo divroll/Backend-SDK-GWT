@@ -60,7 +60,7 @@ public class DivrollEntity extends DivrollBase
             } else if(response.getStatus() == 400) {
                 throw new BadRequestException(response.getStatusText(), response.getStatus());
             } else if(response.getStatus() >= 400) {
-                throw new DivrollException("Client error"); // TODO
+                throw new ClientErrorRequestException(response.getStatusText(), response.getStatus());
             } else if(response.getStatus() == 200) {
                 if(response.getBody() != null) {
                     byte[] bytes = Base64Utils.fromBase64(response.getBody());
