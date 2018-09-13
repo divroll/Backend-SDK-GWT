@@ -2,6 +2,7 @@ package com.divroll.backend.sdk;
 
 import com.divroll.backend.sdk.helper.JSON;
 import com.google.gwt.http.client.RequestException;
+import elemental.client.Browser;
 import io.reactivex.Single;
 import io.reactivex.SingleEmitter;
 import io.reactivex.SingleOnSubscribe;
@@ -640,7 +641,26 @@ public class DivrollUser extends DivrollBase
     }
 
     @Override
+    public String toString() {
+        final String[] s = {""};
+        String entityId = getEntityId();
+        String username = getUsername();
+        String password = getPassword();
+        String authToken = getAuthToken();
+        String acl = getAcl().toString();
+        s[0] = s[0] + "className=" + getClass().getName() + "\n";
+        s[0] = s[0] + "entityId=" + entityId + "\n";
+        s[0] = s[0] + "username=" + username + "\n";
+        s[0] = s[0] + "password=" + password + "\n";
+        s[0] = s[0] + "authToken=" + authToken + "\n";
+        s[0] = s[0] + "acl=" + acl + "\n";
+        getRoles().forEach(divrollRole -> { s[0] = s[0] + divrollRole.toString() + "\n";});
+        return s[0];
+    }
+
+    @Override
     public DivrollUser copy() {
+        Browser.getWindow().getConsole().log(toString());
         return this;
     }
 

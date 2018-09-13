@@ -2,6 +2,7 @@ package com.divroll.backend.sdk;
 
 import com.divroll.backend.sdk.helper.JSON;
 import com.google.gwt.http.client.RequestException;
+import elemental.client.Browser;
 import io.reactivex.Single;
 import io.reactivex.SingleEmitter;
 import io.reactivex.SingleOnSubscribe;
@@ -157,6 +158,20 @@ public class DivrollRoles extends DivrollBase
 
     @Override
     public DivrollRoles copy() {
+        Browser.getWindow().getConsole().log(toString());
         return this;
+    }
+
+    @Override
+    public String toString() {
+        final String[] s = {"["};
+        String skip = String.valueOf(getSkip());
+        String limit = String.valueOf(getLimit());
+        s[0] = s[0] + "className=" + getClass().getName() + "\n";
+        s[0] = s[0] + "skip=" + getSkip() + "\n";
+        s[0] = s[0] + "limit=" + getLimit() + "\n";
+        getRoles().forEach(divrollRole -> { s[0] = s[0] + divrollRole.toString() + "\n";});
+        s[0] = s[0] + "]" + "\n";
+        return s[0];
     }
 }

@@ -84,4 +84,20 @@ public class DivrollACL {
     public void setPublicWrite(Boolean publicWrite) {
         this.publicWrite = publicWrite;
     }
+
+    @Override
+    public String toString() {
+        final String[] s = {"["};
+        String publicRead = getPublicRead().toString();
+        String publicWrite = getPublicWrite().toString();
+        String aclRead = getAclRead().toString();
+        String aclWrite = getAclWrite().toString();
+        s[0] = s[0] + "className=" + getClass().getName() + "\n";
+        s[0] = s[0] + "publicRead=" + publicRead + "\n";
+        s[0] = s[0] + "publicWrite=" + publicWrite + "\n";
+        s[0] = s[0] + "aclRead=" + aclRead + "\n";
+        s[0] = s[0] + "aclWrite=" + aclWrite + "\n";
+        s[0] = s[0] + "]\n";
+        return s[0];
+    }
 }

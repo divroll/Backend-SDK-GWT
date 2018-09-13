@@ -4,6 +4,7 @@ import com.divroll.backend.sdk.exception.DivrollException;
 import com.divroll.backend.sdk.helper.JSON;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.json.client.JSONNull;
+import elemental.client.Browser;
 import io.reactivex.Single;
 import com.divroll.http.client.GetRequest;
 import com.divroll.http.client.HttpClient;
@@ -333,6 +334,22 @@ public class DivrollRole extends DivrollBase
 
     @Override
     public DivrollRole copy() {
+        Browser.getWindow().getConsole().log(toString());
         return this;
     }
+
+    @Override
+    public String toString() {
+        final String[] s = {"["};
+        String entityId = getEntityId();
+        String name =getName();
+        String acl = getAcl().toString();
+        s[0] = s[0] + "className=" + getClass().getName() + "\n";
+        s[0] = s[0] + "entityId=" + entityId + "\n";
+        s[0] = s[0] + "name=" + name + "\n";
+        s[0] = s[0] + "acl=" + acl + "\n";
+        s[0] = s[0] + "]\n";
+        return s[0];
+    }
+
 }
