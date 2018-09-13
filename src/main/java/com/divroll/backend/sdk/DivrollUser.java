@@ -16,6 +16,9 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
+import static com.divroll.backend.sdk.helper.ACLHelper.aclReadFrom;
+import static com.divroll.backend.sdk.helper.ACLHelper.aclWriteFrom;
+
 public class DivrollUser extends DivrollBase
     implements Copyable<DivrollUser> {
 
@@ -111,36 +114,10 @@ public class DivrollUser extends DivrollBase
                 setEntityId(entityId);
                 setAuthToken(webToken);
 
-                List<String> aclWriteList = null;
-                List<String> aclReadList = null;
-
-                Boolean publicRead = null;
-                Boolean publicWrite = null;
-
-                try {
-                    publicRead = responseUser.get("publicRead") != null ? responseUser.getBoolean("publicRead") : null;
-                } catch (Exception e) {}
-
-                try {
-                    publicWrite = responseUser.get("publicWrite") != null ? responseUser.getBoolean("publicWrite") : null;
-                } catch (Exception e) {}
-
-                try {
-                    aclWriteList = JSON.aclJSONArrayToList(responseUser.getJSONArray("aclWrite"));
-                } catch (Exception e) {}
-
-                try {
-                    aclReadList = JSON.aclJSONArrayToList(responseUser.getJSONArray("aclRead"));
-                } catch (Exception e) { }
-
-                try {
-                    JSONObject jsonObject = responseUser.getJSONObject("aclWrite");
-                    aclWriteList = Arrays.asList(jsonObject.getString("entityId"));
-                } catch (Exception e) { }
-                try {
-                    JSONObject jsonObject = responseUser.getJSONObject("aclRead");
-                    aclReadList = Arrays.asList(jsonObject.getString("entityId"));
-                } catch (Exception e) { }
+                Boolean publicRead = responseUser.get("publicRead") != null ? responseUser.getBoolean("publicRead") : null;
+                Boolean publicWrite = responseUser.get("publicWrite") != null ? responseUser.getBoolean("publicWrite") : null;
+                List<String> aclWriteList = aclWriteFrom(responseUser);
+                List<String> aclReadList =  aclReadFrom(responseUser);
 
                 List<DivrollRole> divrollRoles = null;
                 try {
@@ -221,47 +198,10 @@ public class DivrollUser extends DivrollBase
                             String entityId = userJsonObj.getString("entityId");
                             String username = userJsonObj.getString("username");
 
-                            Boolean publicRead = null;
-                            Boolean publicWrite = null;
-
-                            try {
-                                publicRead = userJsonObj.get("publicRead") != null ? userJsonObj.getBoolean("publicRead") : null;
-                            } catch (Exception e) {
-
-                            }
-
-                            try {
-                                publicWrite = userJsonObj.get("publicWrite") != null ? userJsonObj.getBoolean("publicWrite") : null;
-                            } catch (Exception e) {
-
-                            }
-
-                            List<String> aclWriteList = null;
-                            List<String> aclReadList = null;
-
-                            try {
-                                aclWriteList = JSON.aclJSONArrayToList(userJsonObj.getJSONArray("aclWrite"));
-                            } catch (Exception e) {
-
-                            }
-
-                            try {
-                                aclReadList = JSON.aclJSONArrayToList(userJsonObj.getJSONArray("aclRead"));
-                            } catch (Exception e) {
-
-                            }
-
-                            try {
-                                aclWriteList = Arrays.asList(userJsonObj.getString("aclWrite"));
-                            } catch (Exception e) {
-
-                            }
-
-                            try {
-                                aclReadList = Arrays.asList(userJsonObj.getString("aclRead"));
-                            } catch (Exception e) {
-
-                            }
+                            Boolean publicRead = userJsonObj.get("publicRead") != null ? userJsonObj.getBoolean("publicRead") : null;
+                            Boolean publicWrite = userJsonObj.get("publicWrite") != null ? userJsonObj.getBoolean("publicWrite") : null;
+                            List<String> aclWriteList = aclWriteFrom(userJsonObj);
+                            List<String> aclReadList =  aclReadFrom(userJsonObj);
 
                             List<DivrollRole> divrollRoles = null;
                             try {
@@ -407,48 +347,10 @@ public class DivrollUser extends DivrollBase
                             setEntityId(entityId);
                             //setAuthToken(webToken);
 
-                            Boolean publicRead = null;
-                            Boolean publicWrite = null;
-
-                            try {
-                                publicRead = responseUser.getBoolean("publicRead");
-                            } catch (Exception e) {
-
-                            }
-
-                            try {
-                                publicWrite = responseUser.getBoolean("publicWrite");
-                            } catch (Exception e) {
-
-                            }
-
-                            List<String> aclWriteList = null;
-                            List<String> aclReadList = null;
-
-                            try {
-                                aclWriteList = JSON.aclJSONArrayToList(responseUser.getJSONArray("aclWrite"));
-                            } catch (Exception e) {
-
-                            }
-
-                            try {
-                                aclReadList = JSON.aclJSONArrayToList(responseUser.getJSONArray("aclRead"));
-                            } catch (Exception e) {
-
-                            }
-
-                            try {
-                                JSONObject jsonObject = responseUser.getJSONObject("aclWrite");
-                                aclWriteList = Arrays.asList(jsonObject.getString("entityId"));
-                            } catch (Exception e) {
-
-                            }
-                            try {
-                                JSONObject jsonObject = responseUser.getJSONObject("aclRead");
-                                aclReadList = Arrays.asList(jsonObject.getString("entityId"));
-                            } catch (Exception e) {
-
-                            }
+                            Boolean publicRead = responseUser.getBoolean("publicRead");;
+                            Boolean publicWrite = responseUser.getBoolean("publicWrite");
+                            List<String> aclWriteList = aclWriteFrom(responseUser);
+                            List<String> aclReadList =  aclReadFrom(responseUser);
 
                             List<DivrollRole> divrollRoles = null;
                             try {

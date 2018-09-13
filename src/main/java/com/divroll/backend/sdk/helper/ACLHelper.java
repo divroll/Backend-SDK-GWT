@@ -24,7 +24,9 @@ package com.divroll.backend.sdk.helper;
 import com.divroll.backend.sdk.DivrollEntityId;
 import com.divroll.backend.sdk.SafeJSONOArray;
 import com.divroll.backend.sdk.SafeJSONObject;
+import org.json.JSONObject;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -34,6 +36,7 @@ import java.util.List;
  * @since 0-SNAPSHOT
  */
 public class ACLHelper {
+
     public static List<DivrollEntityId> idsOnly(SafeJSONOArray safeJSONOArray) {
         List<DivrollEntityId> aclList = null;
         if (safeJSONOArray == null) {
@@ -72,6 +75,42 @@ public class ACLHelper {
             }
         }
         return false;
+    }
+
+    public static List<String> aclWriteFrom(JSONObject entityJsonObject) {
+        List<String> aclWriteList = null;
+        try {
+            aclWriteList = JSON.aclJSONArrayToList(entityJsonObject.getJSONArray("aclWrite"));
+        } catch (Exception e) {
+
+        }
+        try {
+            JSONObject jsonObject = entityJsonObject.getJSONObject("aclWrite");
+            if(aclWriteList == null) {
+                aclWriteList = Arrays.asList(jsonObject.getString("entityId"));
+            }
+        } catch (Exception e) {
+
+        }
+        return aclWriteList;
+    }
+
+    public static List<String> aclReadFrom(JSONObject entityJsonObject) {
+        List<String> aclReadList = null;
+        try {
+            aclReadList = JSON.aclJSONArrayToList(entityJsonObject.getJSONArray("aclRead"));
+        } catch (Exception e) {
+
+        }
+        try {
+            JSONObject jsonObject = entityJsonObject.getJSONObject("aclRead");
+            if(aclReadList == null) {
+                aclReadList = Arrays.asList(jsonObject.getString("entityId"));
+            }
+        } catch (Exception e) {
+
+        }
+        return aclReadList;
     }
 
 }

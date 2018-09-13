@@ -88,10 +88,10 @@ public class DivrollACL {
     @Override
     public String toString() {
         final String[] s = {"["};
-        String publicRead = String.valueOf(getPublicRead());
-        String publicWrite = String.valueOf(getPublicWrite());
-        String aclRead = String.valueOf(getAclRead());
-        String aclWrite = String.valueOf(getAclWrite());
+        String publicRead = String.valueOf(getPublicRead() != null ? getPublicRead() : null);
+        String publicWrite = String.valueOf(getPublicWrite() != null ? getPublicWrite() : null);
+        String aclRead = String.valueOf(getAclRead() != null ? getAclRead() : null);
+        String aclWrite = String.valueOf(getAclWrite() != null ? getAclWrite() : null);
         s[0] = s[0] + "className=" + getClass().getName() + "\n";
         s[0] = s[0] + "publicRead=" + publicRead + "\n";
         s[0] = s[0] + "publicWrite=" + publicWrite + "\n";

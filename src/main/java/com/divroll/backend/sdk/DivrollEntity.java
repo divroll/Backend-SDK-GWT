@@ -15,6 +15,9 @@ import org.json.JSONObject;
 
 import java.util.*;
 
+import static com.divroll.backend.sdk.helper.ACLHelper.aclReadFrom;
+import static com.divroll.backend.sdk.helper.ACLHelper.aclWriteFrom;
+
 public class DivrollEntity extends DivrollBase
     implements Copyable<DivrollEntity> {
 
@@ -438,47 +441,10 @@ public class DivrollEntity extends DivrollBase
                 JSONObject resultJsonObject = entityJsonObject.getJSONObject("results");
                 String entityId = entityJsonObject.getString("entityId");
 
-                Boolean publicRead = null;
-                Boolean publicWrite = null;
-
-                try {
-                    publicWrite = entityJsonObject.getBoolean("publicWrite");
-                } catch (Exception e) {
-
-                }
-
-                try {
-                    publicRead = entityJsonObject.getBoolean("publicRead");
-                } catch (Exception e) {
-
-                }
-
-                List<String> aclWriteList = null;
-                List<String> aclReadList = null;
-
-                try {
-                    aclWriteList = JSON.aclJSONArrayToList(entityJsonObject.getJSONArray("aclWrite"));
-                } catch (Exception e) {
-
-                }
-
-                try {
-                    aclReadList = JSON.aclJSONArrayToList(entityJsonObject.getJSONArray("aclRead"));
-                } catch (Exception e) {
-
-                }
-
-                try {
-                    aclWriteList = Arrays.asList(entityJsonObject.getString("aclWrite"));
-                } catch (Exception e) {
-
-                }
-
-                try {
-                    aclReadList = Arrays.asList(entityJsonObject.getString("aclRead"));
-                } catch (Exception e) {
-
-                }
+                Boolean publicRead = entityJsonObject.getBoolean("publicRead");
+                Boolean publicWrite = entityJsonObject.getBoolean("publicWrite");
+                List<String> aclWriteList = aclWriteFrom(entityJsonObject);
+                List<String> aclReadList =  aclReadFrom(entityJsonObject);
 
                 Iterator<String> it = entityJsonObject.keySet().iterator();
                 while(it.hasNext()) {
@@ -863,54 +829,10 @@ public class DivrollEntity extends DivrollBase
                 JSONObject entityJsonObject = bodyObj.getJSONObject("entity");
                 String entityId = entityJsonObject.getString("entityId");
 
-                Boolean publicRead = null;
-                Boolean publicWrite = null;
-
-                try {
-                    publicWrite = entityJsonObject.getBoolean("publicWrite");
-                } catch (Exception e) {
-
-                }
-
-                try {
-                    publicRead = entityJsonObject.getBoolean("publicRead");
-                } catch (Exception e) {
-
-                }
-
-                List<String> aclWriteList = null;
-                List<String> aclReadList = null;
-
-                try {
-                    aclWriteList = JSON.aclJSONArrayToList(entityJsonObject.getJSONArray("aclWrite"));
-                    Window.alert("WRITE------->"  + aclWriteList.toString());
-                } catch (Exception e) {
-
-                }
-
-                try {
-                    aclReadList = JSON.aclJSONArrayToList(entityJsonObject.getJSONArray("aclRead"));
-                    Window.alert("READ------->"  + aclReadList.toString());
-                } catch (Exception e) {
-
-                }
-
-                try {
-                    JSONObject jsonObject = entityJsonObject.getJSONObject("aclWrite");
-                    if(aclWriteList == null) {
-                        aclWriteList = Arrays.asList(jsonObject.getString("entityId"));
-                    }
-                } catch (Exception e) {
-
-                }
-                try {
-                    JSONObject jsonObject = entityJsonObject.getJSONObject("aclRead");
-                    if(aclReadList == null) {
-                        aclReadList = Arrays.asList(jsonObject.getString("entityId"));
-                    }
-                } catch (Exception e) {
-
-                }
+                Boolean publicRead = entityJsonObject.getBoolean("publicRead");
+                Boolean publicWrite = entityJsonObject.getBoolean("publicWrite");
+                List<String> aclWriteList = aclWriteFrom(entityJsonObject);
+                List<String> aclReadList =  aclReadFrom(entityJsonObject);
 
                 Iterator<String> it = entityJsonObject.keySet().iterator();
                 while(it.hasNext()) {

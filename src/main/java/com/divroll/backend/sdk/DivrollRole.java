@@ -20,6 +20,9 @@ import org.json.JSONObject;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.divroll.backend.sdk.helper.ACLHelper.aclReadFrom;
+import static com.divroll.backend.sdk.helper.ACLHelper.aclWriteFrom;
+
 public class DivrollRole extends DivrollBase
     implements Copyable<DivrollRole> {
 
@@ -97,48 +100,10 @@ public class DivrollRole extends DivrollBase
                 String entityId = role.getString("entityId");
                 String name = role.getString("name");
 
-                Boolean publicRead = null;
-                Boolean publicWrite = null;
-
-                try {
-                    publicRead = role.getBoolean("publicRead");
-                } catch (Exception e) {
-
-                }
-
-                try {
-                    publicWrite = role.getBoolean("publicWrite");
-                } catch (Exception e) {
-
-                }
-
-                List<String> aclWriteList = null;
-                List<String> aclReadList = null;
-
-                try {
-                    aclWriteList = JSON.aclJSONArrayToList(role.getJSONArray("aclWrite"));
-                } catch (Exception e) {
-
-                }
-
-                try {
-                    aclReadList = JSON.aclJSONArrayToList(role.getJSONArray("aclRead"));
-                } catch (Exception e) {
-
-                }
-
-                try {
-                    JSONObject jsonObject = role.getJSONObject("aclWrite");
-                    aclWriteList = Arrays.asList(jsonObject.getString("entityId"));
-                } catch (Exception e) {
-
-                }
-                try {
-                    JSONObject jsonObject = role.getJSONObject("aclRead");
-                    aclReadList = Arrays.asList(jsonObject.getString("entityId"));
-                } catch (Exception e) {
-
-                }
+                Boolean publicRead = role.getBoolean("publicRead");
+                Boolean publicWrite = role.getBoolean("publicWrite");
+                List<String> aclWriteList = aclWriteFrom(role);
+                List<String> aclReadList =  aclReadFrom(role);
 
                 DivrollACL acl = new DivrollACL(aclReadList, aclWriteList);
                 acl.setPublicRead(publicRead);
@@ -262,40 +227,17 @@ public class DivrollRole extends DivrollBase
                 JsonNode body = response.getBody();
                 JSONObject bodyObj = body.getObject();
                 JSONObject role = bodyObj.getJSONObject("role");
+
                 String entityId = role.getString("entityId");
                 String name = role.getString("name");
-                Boolean publicRead = role.getBoolean("publicRead");
-                Boolean publicWrite = role.getBoolean("publicWrite");
+
                 setEntityId(entityId);
                 setName(name);
 
-                List<String> aclWriteList = null;
-                List<String> aclReadList = null;
-
-                try {
-                    aclWriteList = JSON.aclJSONArrayToList(role.getJSONArray("aclWrite"));
-                } catch (Exception e) {
-
-                }
-
-                try {
-                    aclReadList = JSON.aclJSONArrayToList(role.getJSONArray("aclRead"));
-                } catch (Exception e) {
-
-                }
-
-                try {
-                    JSONObject jsonObject = role.getJSONObject("aclWrite");
-                    aclWriteList = Arrays.asList(jsonObject.getString("entityId"));
-                } catch (Exception e) {
-
-                }
-                try {
-                    JSONObject jsonObject = role.getJSONObject("aclRead");
-                    aclReadList = Arrays.asList(jsonObject.getString("entityId"));
-                } catch (Exception e) {
-
-                }
+                Boolean publicRead = role.getBoolean("publicRead");
+                Boolean publicWrite = role.getBoolean("publicWrite");
+                List<String> aclWriteList = aclWriteFrom(role);
+                List<String> aclReadList =  aclReadFrom(role);
 
                 DivrollACL acl = new DivrollACL(aclReadList, aclWriteList);
                 acl.setPublicWrite(publicWrite);
@@ -341,9 +283,9 @@ public class DivrollRole extends DivrollBase
     @Override
     public String toString() {
         final String[] s = {"["};
-        String entityId = getEntityId();
-        String name =getName();
-        String acl = getAcl().toString();
+        String entityId = getEntityId() != null ? getEntityId() : null;
+        String name = getName() != null ? getName() : null;
+        String acl = getAcl() != null ? getAcl().toString() : null;
         s[0] = s[0] + "className=" + getClass().getName() + "\n";
         s[0] = s[0] + "entityId=" + entityId + "\n";
         s[0] = s[0] + "name=" + name + "\n";

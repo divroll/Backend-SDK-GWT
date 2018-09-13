@@ -1,6 +1,5 @@
 package com.divroll.backend.sdk;
 
-import com.divroll.backend.sdk.helper.JSON;
 import com.divroll.http.client.GetRequest;
 import com.divroll.http.client.HttpClient;
 import com.divroll.http.client.JsonNode;
@@ -14,9 +13,11 @@ import io.reactivex.Single;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+
+import static com.divroll.backend.sdk.helper.ACLHelper.aclReadFrom;
+import static com.divroll.backend.sdk.helper.ACLHelper.aclWriteFrom;
 
 public class DivrollUsers extends DivrollBase
     implements Copyable<DivrollUsers> {
@@ -107,32 +108,8 @@ public class DivrollUsers extends DivrollBase
                         Boolean publicRead = userObj.getBoolean("publicRead");
                         Boolean publicWrite = userObj.getBoolean("publicWrite");
 
-                        List<String> aclWriteList = null;
-                        List<String> aclReadList = null;
-
-                        try {
-                            aclWriteList = JSON.aclJSONArrayToList(userObj.getJSONArray("aclWrite"));
-                        } catch (Exception e) {
-
-                        }
-
-                        try {
-                            aclReadList = JSON.aclJSONArrayToList(userObj.getJSONArray("aclRead"));
-                        } catch (Exception e) {
-
-                        }
-
-                        try {
-                            aclWriteList = Arrays.asList(userObj.getString("aclWrite"));
-                        } catch (Exception e) {
-
-                        }
-
-                        try {
-                            aclReadList = Arrays.asList(userObj.getString("aclRead"));
-                        } catch (Exception e) {
-
-                        }
+                        List<String> aclWriteList = aclWriteFrom(userObj);
+                        List<String> aclReadList =  aclReadFrom(userObj);
 
                         JSONArray userRoles = null;
                         try {
@@ -207,7 +184,7 @@ public class DivrollUsers extends DivrollBase
         String skip = String.valueOf(getSkip());
         String limit = String.valueOf(getLimit());
         s[0] = s[0] + "className=" + getClass().getName() + "\n";
-        s[0] = s[0] + "users=" + users.toString() + "\n";
+        s[0] = s[0] + "users=" + users != null ? users.toString() : null + "\n";
         s[0] = s[0] + "skip=" + skip + "\n";
         s[0] = s[0] + "limit=" + limit + "\n";
         s[0] = s[0] + "]" + "\n";
