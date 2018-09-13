@@ -7,7 +7,8 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.divroll.backend</groupId>
   <artifactId>sdk</artifactId>
-  <packaging>war</packaging>
+  <!--<packaging>war</packaging>-->
+  <packaging>jar</packaging>
   <version>0-SNAPSHOT</version>
   <name>backend-sdk</name>
   
@@ -101,51 +102,6 @@
     <outputDirectory>${project.build.directory}/${project.build.finalName}/WEB-INF/classes</outputDirectory>
 
     <plugins>
-
-      <!-- Mojo's Maven Plugin for GWT -->
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>gwt-maven-plugin</artifactId>
-        <version>2.8.0-beta1</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>compile</goal>
-              <goal>generateAsync</goal>
-            </goals>
-          </execution>
-        </executions>
-        <!-- Plugin configuration. There are many available options, see 
-          gwt-maven-plugin documentation at codehaus.org -->
-        <configuration>
-          <runTarget>index.html</runTarget>
-          <modules>
-            <module>com.divroll.backend.sdk</module>
-          </modules>
-          <generateJsInteropExports>true</generateJsInteropExports>
-          <jsInteropMode>JS_RC</jsInteropMode>
-          <!--<style>OBFUSCATED</style>-->
-          <!--<draftCompile>false</draftCompile>-->
-          <!--<optimizationLevel>9</optimizationLevel>-->
-            <style>PRETTY</style>
-            <draftCompile>true</draftCompile>
-            <optimizationLevel>0</optimizationLevel>
-            <extraJvmArgs>-XX:MaxPermSize=512m -Xmx2048m</extraJvmArgs>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-war-plugin</artifactId>
-        <version>2.3</version>
-        <executions>
-          <execution>
-            <phase>compile</phase>
-          </execution>
-        </executions>
-        <configuration>
-          <webappDirectory>${webappDirectory}</webappDirectory>
-        </configuration>
-      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
@@ -158,6 +114,57 @@
     </plugins>
   </build>
   <profiles>
+    <profile>
+      <id>war</id>
+      <build>
+        <plugins>
+          <!-- Mojo's Maven Plugin for GWT -->
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>gwt-maven-plugin</artifactId>
+            <version>2.8.0-beta1</version>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>compile</goal>
+                  <goal>generateAsync</goal>
+                </goals>
+              </execution>
+            </executions>
+            <!-- Plugin configuration. There are many available options, see
+              gwt-maven-plugin documentation at codehaus.org -->
+            <configuration>
+              <runTarget>index.html</runTarget>
+              <modules>
+                <module>com.divroll.backend.sdk</module>
+              </modules>
+              <generateJsInteropExports>true</generateJsInteropExports>
+              <jsInteropMode>JS_RC</jsInteropMode>
+              <!--<style>OBFUSCATED</style>-->
+              <!--<draftCompile>false</draftCompile>-->
+              <!--<optimizationLevel>9</optimizationLevel>-->
+              <style>PRETTY</style>
+              <draftCompile>true</draftCompile>
+              <optimizationLevel>0</optimizationLevel>
+              <extraJvmArgs>-XX:MaxPermSize=512m -Xmx2048m</extraJvmArgs>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-war-plugin</artifactId>
+            <version>2.3</version>
+            <executions>
+              <execution>
+                <phase>compile</phase>
+              </execution>
+            </executions>
+            <configuration>
+              <webappDirectory>${webappDirectory}</webappDirectory>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
     <profile>
       <id>jar</id>
       <build>
@@ -178,6 +185,18 @@
           </resource>
         </resources>
         <plugins>
+          <plugin>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <version>2.8.1</version>
+            <configuration>
+              <additionalClasspathElements>
+                <additionalClasspathElement>${project.build.sourceDirectory}</additionalClasspathElement>
+                <additionalClasspathElement>${project.build.testSourceDirectory}</additionalClasspathElement>
+              </additionalClasspathElements>
+              <useManifestOnlyJar>false</useManifestOnlyJar>
+              <forkMode>always</forkMode>
+            </configuration>
+          </plugin>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-compiler-plugin</artifactId>

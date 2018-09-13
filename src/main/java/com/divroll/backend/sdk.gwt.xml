@@ -12,6 +12,4 @@
   <entry-point class='com.divroll.backend.sdk.SDKEntryPoint' />
   <!-- Specify the paths for translatable code                    -->
   <source path="sdk"/>
-  <collapse-all-properties />
-  <add-linker name="sso" />
 </module>
