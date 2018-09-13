@@ -83,103 +83,112 @@ public class DivrollUsers extends DivrollBase
                 throw new ClientErrorRequestException(response.getStatusText(), response.getStatus());
             } else if(response.getStatus() == 200) {
 
-                setUsers(new LinkedList<>());
-
                 JsonNode body = response.getBody();
 
                 JSONObject bodyObj = body.getObject();
                 JSONObject users = bodyObj.getJSONObject("users");
                 JSONArray results = users.getJSONArray("results");
+                int skip = users.getNumber("skip").intValue();
+                int limit = users.getNumber("limit").intValue();
 
                 if(results == null) {
                     JSONObject singleResultObject = users.getJSONObject("results");
-                    results = new JSONArray();
-                    results.put(singleResultObject);
+                    if(singleResultObject != null) {
+                        results = new JSONArray();
+                        results.put(singleResultObject);
+                    }
                 }
 
-                for(int i=0;i<results.length();i++){
-                    JSONObject userObj = results.getJSONObject(i);
-                    String entityId = userObj.getString("entityId");
-                    String username = userObj.getString("username");
-                    Boolean publicRead = userObj.getBoolean("publicRead");
-                    Boolean publicWrite = userObj.getBoolean("publicWrite");
+                if(results != null) {
+                    for(int i=0;i<results.length();i++){
+                        JSONObject userObj = results.getJSONObject(i);
+                        String entityId = userObj.getString("entityId");
+                        String username = userObj.getString("username");
+                        Boolean publicRead = userObj.getBoolean("publicRead");
+                        Boolean publicWrite = userObj.getBoolean("publicWrite");
 
-                    List<String> aclWriteList = null;
-                    List<String> aclReadList = null;
+                        List<String> aclWriteList = null;
+                        List<String> aclReadList = null;
 
-                    try {
-                        aclWriteList = JSON.aclJSONArrayToList(userObj.getJSONArray("aclWrite"));
-                    } catch (Exception e) {
+                        try {
+                            aclWriteList = JSON.aclJSONArrayToList(userObj.getJSONArray("aclWrite"));
+                        } catch (Exception e) {
 
-                    }
+                        }
 
-                    try {
-                        aclReadList = JSON.aclJSONArrayToList(userObj.getJSONArray("aclRead"));
-                    } catch (Exception e) {
+                        try {
+                            aclReadList = JSON.aclJSONArrayToList(userObj.getJSONArray("aclRead"));
+                        } catch (Exception e) {
 
-                    }
+                        }
 
-                    try {
-                        aclWriteList = Arrays.asList(userObj.getString("aclWrite"));
-                    } catch (Exception e) {
+                        try {
+                            aclWriteList = Arrays.asList(userObj.getString("aclWrite"));
+                        } catch (Exception e) {
 
-                    }
+                        }
 
-                    try {
-                        aclReadList = Arrays.asList(userObj.getString("aclRead"));
-                    } catch (Exception e) {
+                        try {
+                            aclReadList = Arrays.asList(userObj.getString("aclRead"));
+                        } catch (Exception e) {
 
-                    }
+                        }
 
-                    JSONArray userRoles = null;
-                    try {
-                        userRoles = userObj.getJSONArray("roles");
-                    } catch (Exception e) {
+                        JSONArray userRoles = null;
+                        try {
+                            userRoles = userObj.getJSONArray("roles");
+                        } catch (Exception e) {
 
-                    }
+                        }
 
-                    List<DivrollRole> divrollRoles = null;
-                    try {
-                        if(userRoles != null) {
-                            Object roleObjects = userObj.get("roles");
-                            if(roleObjects instanceof JSONArray) {
-                                divrollRoles = new LinkedList<DivrollRole>();
-                                for(int j=0;j<userRoles.length();j++) {
-                                    JSONObject jsonObject = userRoles.getJSONObject(j);
+                        List<DivrollRole> divrollRoles = null;
+                        try {
+                            if(userRoles != null) {
+                                Object roleObjects = userObj.get("roles");
+                                if(roleObjects instanceof JSONArray) {
+                                    divrollRoles = new LinkedList<DivrollRole>();
+                                    for(int j=0;j<userRoles.length();j++) {
+                                        JSONObject jsonObject = userRoles.getJSONObject(j);
+                                        String roleId = jsonObject.getString("entityId");
+                                        DivrollRole divrollRole = new DivrollRole();
+                                        divrollRole.setEntityId(roleId);
+                                        divrollRoles.add(divrollRole);
+                                    }
+                                } else if(roleObjects instanceof JSONObject) {
+                                    divrollRoles = new LinkedList<DivrollRole>();
+                                    JSONObject jsonObject = (JSONObject) roleObjects;
                                     String roleId = jsonObject.getString("entityId");
                                     DivrollRole divrollRole = new DivrollRole();
                                     divrollRole.setEntityId(roleId);
                                     divrollRoles.add(divrollRole);
                                 }
-                            } else if(roleObjects instanceof JSONObject) {
-                                divrollRoles = new LinkedList<DivrollRole>();
-                                JSONObject jsonObject = (JSONObject) roleObjects;
-                                String roleId = jsonObject.getString("entityId");
-                                DivrollRole divrollRole = new DivrollRole();
-                                divrollRole.setEntityId(roleId);
-                                divrollRoles.add(divrollRole);
                             }
+
+                        } catch (Exception e) {
+                            // do nothing
                         }
 
-                    } catch (Exception e) {
-                        // do nothing
+                        DivrollACL acl = new DivrollACL(aclReadList, aclWriteList);
+                        acl.setPublicWrite(publicWrite);
+                        acl.setPublicRead(publicRead);
+
+                        DivrollUser user = new DivrollUser();
+                        user.setEntityId(entityId);
+                        user.setAcl(acl);
+                        user.setRoles(divrollRoles);
+                        user.setUsername(username);
+
+                        List<DivrollUser> divrollUsers = getUsers();
+                        divrollUsers.add(user);
+                        setUsers(divrollUsers);
                     }
-
-                    DivrollACL acl = new DivrollACL(aclReadList, aclWriteList);
-                    acl.setPublicWrite(publicWrite);
-                    acl.setPublicRead(publicRead);
-
-                    DivrollUser user = new DivrollUser();
-                    user.setEntityId(entityId);
-                    user.setAcl(acl);
-                    user.setRoles(divrollRoles);
-                    user.setUsername(username);
-
-                    List<DivrollUser> divrollUsers = getUsers();
-                    divrollUsers.add(user);
-                    setUsers(divrollUsers);
-
+                    setSkip(skip);
+                    setLimit(limit);
                 }
+            } else {
+                setSkip(skip);
+                setLimit(limit);
+                setUsers(new LinkedList<>());
             }
             return copy();
         });

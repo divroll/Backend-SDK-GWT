@@ -47,25 +47,10 @@ public class DivrollUser extends DivrollBase
         if(Divroll.getAuthToken() != null) {
             httpRequestWithBody.header("X-Divroll-Auth-Key", Divroll.getAuthToken());
         }
-        JSONObject userObj = new JSONObject();
-        userObj.put("username", username);
-        userObj.put("password", password);
-        userObj.put("publicRead", (acl != null && acl.getPublicRead() != null)
-                ? acl.getPublicRead() : JSONObject.NULL);
-        userObj.put("publicWrite", (acl != null && acl.getPublicWrite() != null)
-                ? acl.getPublicWrite() : JSONObject.NULL);
+
         JSONObject body = new JSONObject();
+        JSONObject userObj = new JSONObject();
 
-        JSONArray roles = new JSONArray();
-        for(DivrollRole role : getRoles()) {
-            JSONObject roleObj = new JSONObject();
-            roleObj.put("entityId", role.getEntityId());
-            roles.put(roleObj);
-        }
-        userObj.put("roles", roles);
-
-        body.put("user", userObj);
-        httpRequestWithBody.body(body);
         JSONArray aclRead = new JSONArray();
         JSONArray aclWrite = new JSONArray();
         if(acl != null) {
@@ -81,9 +66,31 @@ public class DivrollUser extends DivrollBase
             }
         }
 
+        userObj.put("aclRead", aclRead);
+        userObj.put("aclWrite", aclWrite);
+        userObj.put("username", username);
+        userObj.put("password", password);
+        userObj.put("publicRead", (acl != null && acl.getPublicRead() != null)
+                ? acl.getPublicRead() : JSONObject.NULL);
+        userObj.put("publicWrite", (acl != null && acl.getPublicWrite() != null)
+                ? acl.getPublicWrite() : JSONObject.NULL);
+
+        JSONArray roles = new JSONArray();
+        for(DivrollRole role : getRoles()) {
+            JSONObject roleObj = new JSONObject();
+            roleObj.put("entityId", role.getEntityId());
+            roles.put(roleObj);
+        }
+
+        userObj.put("roles", roles);
+        body.put("user", userObj);
+
         httpRequestWithBody.header("X-Divroll-ACL-Read", aclRead.toString());
         httpRequestWithBody.header("X-Divroll-ACL-Write", aclWrite.toString());
         httpRequestWithBody.header("Content-Type", "application/json");
+
+        Browser.getWindow().getConsole().log("CREATE BODY=" + body);
+        httpRequestWithBody.body(body);
 
         return httpRequestWithBody.asJson().map(response -> {
             if(response.getStatus() >= 500) {

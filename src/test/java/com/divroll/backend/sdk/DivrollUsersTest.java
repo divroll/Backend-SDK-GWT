@@ -3,6 +3,7 @@ package com.divroll.backend.sdk;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Window;
+import elemental.client.Browser;
 import org.junit.FixMethodOrder;
 import org.junit.runners.MethodSorters;
 
@@ -106,12 +107,11 @@ public class DivrollUsersTest extends GWTTestCase {
                         if(list.size() == 10) {
                             DivrollUsers users = new DivrollUsers();
                             users.query().subscribe(queryUsers -> {
+                                Browser.getWindow().getConsole().log("Query Test:" + new DivrollUsers());
+                                Browser.getWindow().getConsole().log("Query Result:" + queryUsers.toString());
                                 assertEquals(0, queryUsers.getUsers().size());
-
                                 createdAdminUser.login(adminUsername, "password").subscribe(loggedInUser -> {
-
                                     assertNotNull(loggedInUser.getAuthToken());
-
                                     DivrollUsers divrollUsers = new DivrollUsers();
                                     divrollUsers.query().subscribe(divrollUsers1 -> {
                                         assertEquals(10, divrollUsers1.getUsers().size());
@@ -124,6 +124,7 @@ public class DivrollUsersTest extends GWTTestCase {
                                             user.setAcl(userAcl);
                                             user.create(df.getEmailAddress(), "password").subscribe(createdUser1 -> {
                                                 assertNotNull(createdUser1.getEntityId());
+                                                list1.add(createdUser1);
                                                 Window.alert("List1 size=" + list1.size());
                                                 if(list1.size() == 20) {
                                                     DivrollUsers divrollUsers2 = new DivrollUsers();
