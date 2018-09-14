@@ -181,7 +181,6 @@ public class DivrollEntity extends DivrollBase
     public Integer getIntegerProperty(String propertyName) {
         Object value = entityObj.get(propertyName);
         if(value != null) {
-            Window.alert(value.getClass().getName() + "<----------------");
             if(value instanceof JSONValue) {
                 try {
                     JSONValue jsonValue = (JSONValue) value;
@@ -262,11 +261,7 @@ public class DivrollEntity extends DivrollBase
 
     public Object getProperty(String propertyName) {
         Object value = entityObj.get(propertyName);
-        Window.alert("Entity=" + entityObj.toString());
-        Window.alert("Property=" + propertyName);
-        Window.alert("Type=" + value.getClass().getName());
         if(value instanceof JSONValue) {
-            Window.alert("Value=" + value.toString());
             JSONValue jsonValue = (JSONValue) value;
             if(jsonValue.isNull() != null) {
                 return null;
@@ -846,9 +841,6 @@ public class DivrollEntity extends DivrollBase
                         // skip
                     } else {
                         Object obj = entityJsonObject.get(propertyKey);
-                        Window.alert("Property->" + propertyKey);
-                        Window.alert("Object->" + obj.toString());
-                        Window.alert("Class->" + obj.getClass().getName());
                         entityObj.put(propertyKey, obj);
                     }
                 }
@@ -893,6 +885,10 @@ public class DivrollEntity extends DivrollBase
             }
             return false;
         });
+    }
+
+    public Set<String> getPropertyNames() {
+        return entityObj.asJSONObject().keySet();
     }
 
     @Override
