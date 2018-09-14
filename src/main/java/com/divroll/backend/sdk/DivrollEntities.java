@@ -2,6 +2,7 @@ package com.divroll.backend.sdk;
 
 import com.divroll.backend.sdk.helper.JSON;
 import com.google.gwt.http.client.RequestException;
+import elemental.client.Browser;
 import io.reactivex.Single;
 import com.divroll.http.client.GetRequest;
 import com.divroll.http.client.HttpClient;
@@ -19,7 +20,7 @@ import java.util.List;
 public class DivrollEntities extends DivrollBase
     implements Copyable<DivrollEntities> {
 
-    private static String entityStoreUrl = "/entities/";
+    private static final String entityStoreUrl = "/entities/";
 
     private List<DivrollEntity> entities;
     private int skip;
@@ -30,7 +31,6 @@ public class DivrollEntities extends DivrollBase
 
     public DivrollEntities(String entityStore) {
         this.entityStore = entityStore;
-        entityStoreUrl = entityStoreUrl + entityStore;
     }
 
     public List<DivrollEntity> getEntities() {
@@ -61,8 +61,9 @@ public class DivrollEntities extends DivrollBase
     }
 
     public Single<DivrollEntities> query() throws RequestException {
-        GetRequest getRequest = (GetRequest) HttpClient.get(Divroll.getServerUrl()
-                + entityStoreUrl);
+        String completeUrl = Divroll.getServerUrl()
+                + entityStoreUrl + entityStore;;
+        GetRequest getRequest = (GetRequest) HttpClient.get(completeUrl);
 
         if(Divroll.getMasterKey() != null) {
             getRequest.header(HEADER_MASTER_KEY, Divroll.getMasterKey());
