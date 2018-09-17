@@ -1,6 +1,7 @@
 package com.divroll.backend.sdk;
 
 import com.divroll.backend.sdk.helper.JSON;
+import com.divroll.http.client.HttpRequestWithBody;
 import com.google.gwt.http.client.RequestException;
 import elemental.client.Browser;
 import io.reactivex.Single;

@@ -887,6 +887,37 @@ public class DivrollEntity extends DivrollBase
         });
     }
 
+    public Single<Boolean> deleteProperty(String propertyName) throws RequestException {
+        String completeUrl = Divroll.getServerUrl() + entityStoreBase + "/" + getEntityId() + "/properties/" + propertyName;
+        HttpRequestWithBody httpRequestWithBody = HttpClient.delete(completeUrl);
+        if(Divroll.getMasterKey() != null) {
+            httpRequestWithBody.header(HEADER_MASTER_KEY, Divroll.getMasterKey());
+        }
+        if(Divroll.getAppId() != null) {
+            httpRequestWithBody.header(HEADER_APP_ID, Divroll.getAppId());
+        }
+        if(Divroll.getApiKey() != null) {
+            httpRequestWithBody.header(HEADER_API_KEY, Divroll.getApiKey());
+        }
+        if(Divroll.getAuthToken() != null) {
+            httpRequestWithBody.header(HEADER_AUTH_TOKEN, Divroll.getAuthToken());
+        }
+        return httpRequestWithBody.asJson().map(response -> {
+            if(response.getStatus() >= 500) {
+                throwException(response);
+            } else if(response.getStatus() == 401) {
+                throw new UnauthorizedRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() == 400) {
+                throw new BadRequestException(response.getStatusText(), response.getStatus());
+            }  else if(response.getStatus() >= 400) {
+                throwException(response);
+            } else if(response.getStatus() == 200) {
+                return true;
+            }
+            return false;
+        });
+    }
+
     public Set<String> getPropertyNames() {
         return entityObj.asJSONObject().keySet();
     }
