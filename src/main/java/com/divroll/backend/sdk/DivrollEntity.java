@@ -777,11 +777,6 @@ public class DivrollEntity extends DivrollBase
             } else if(response.getStatus() == 400) {
                 throw new BadRequestException(response.getStatusText(),response.getStatus());
             } else if(response.getStatus() == 200) {
-                JsonNode responseBody = response.getBody();
-                JSONObject bodyObj = responseBody.getObject();
-                JSONObject entity = bodyObj.getJSONObject("entity");
-                String entityId = entity.getString("entityId");
-                setEntityId(entityId);
                 return true;
             }
             return false;
