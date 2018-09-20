@@ -24,6 +24,9 @@ public class DivrollEntity extends DivrollBase
     private String entityStoreBase = "/entities/";
     private String entityId;
     private DivrollACL acl;
+    private List<String> linkNames;
+    private List<String> blobNames;
+
     private JSONObject entityObj = new JSONObject();
 
     private DivrollEntity() {}
@@ -834,6 +837,18 @@ public class DivrollEntity extends DivrollBase
                             || propertyKey.equals("aclRead")
                             || propertyKey.equals("aclWrite")) {
                         // skip
+                    } else if(propertyKey.equals("linkNames")) {
+                        JSONArray jsonArray = entityJsonObject.getJSONArray(propertyKey);
+                        for(int i=0;i<jsonArray.length();i++) {
+                            String linkName = jsonArray.getString(i);
+                            getLinkNames().add(linkName);
+                        }
+                    } else if(propertyKey.equals("blobNames")) {
+                        JSONArray jsonArray = entityJsonObject.getJSONArray(propertyKey);
+                        for(int i=0;i<jsonArray.length();i++) {
+                            String blobName = jsonArray.getString(i);
+                            getBlobNames().add(blobName);
+                        }
                     } else {
                         Object obj = entityJsonObject.get(propertyKey);
                         entityObj.put(propertyKey, obj);
@@ -920,5 +935,27 @@ public class DivrollEntity extends DivrollBase
     @Override
     public DivrollEntity copy() {
         return this;
+    }
+
+    public List<String> getLinkNames() {
+        if(linkNames == null) {
+            linkNames = new LinkedList<>();
+        }
+        return linkNames;
+    }
+
+    private void setLinkNames(List<String> linkNames) {
+        this.linkNames = linkNames;
+    }
+
+    public List<String> getBlobNames() {
+        if(blobNames == null) {
+            blobNames = new LinkedList<>();
+        }
+        return blobNames;
+    }
+
+    private void setBlobNames(List<String> blobNames) {
+        this.blobNames = blobNames;
     }
 }
