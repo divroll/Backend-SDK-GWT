@@ -804,7 +804,7 @@ public class DivrollEntity extends DivrollBase
 
         return getRequest.asJson().map(response -> {
             if(response.getStatus() >= 500) {
-                throwException(response);
+                throw new HttpRequestException(response.getStatusText(), response.getStatus());
             } else if(response.getStatus() == 404) {
                 throw new NotFoundRequestException(response.getStatusText(),response.getStatus());
             }  else if(response.getStatus() == 401) {
@@ -812,7 +812,7 @@ public class DivrollEntity extends DivrollBase
             } else if(response.getStatus() == 400) {
                 throw new BadRequestException(response.getStatusText(),response.getStatus());
             }  else if(response.getStatus() >= 400) {
-                throwException(response);
+                throw new HttpRequestException(response.getStatusText(), response.getStatus());
             } else if(response.getStatus() == 200) {
                 JsonNode body = response.getBody();
                 JSONObject bodyObj = body.getObject();
@@ -899,13 +899,13 @@ public class DivrollEntity extends DivrollBase
         }
         return httpRequestWithBody.asJson().map(response -> {
             if(response.getStatus() >= 500) {
-                throwException(response);
+                throw new HttpRequestException(response.getStatusText(), response.getStatus());
             } else if(response.getStatus() == 401) {
                 throw new UnauthorizedRequestException(response.getStatusText(), response.getStatus());
             } else if(response.getStatus() == 400) {
                 throw new BadRequestException(response.getStatusText(), response.getStatus());
             }  else if(response.getStatus() >= 400) {
-                throwException(response);
+                throw new HttpRequestException(response.getStatusText(), response.getStatus());
             } else if(response.getStatus() == 200) {
                 return true;
             }

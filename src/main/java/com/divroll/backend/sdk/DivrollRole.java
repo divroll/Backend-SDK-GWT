@@ -2,15 +2,12 @@ package com.divroll.backend.sdk;
 
 import com.divroll.backend.sdk.exception.DivrollException;
 import com.divroll.backend.sdk.helper.JSON;
+import com.divroll.http.client.*;
 import com.divroll.http.client.exceptions.*;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.json.client.JSONNull;
 import elemental.client.Browser;
 import io.reactivex.Single;
-import com.divroll.http.client.GetRequest;
-import com.divroll.http.client.HttpClient;
-import com.divroll.http.client.HttpRequestWithBody;
-import com.divroll.http.client.JsonNode;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -213,7 +210,7 @@ public class DivrollRole extends DivrollBase
 
         return getRequest.asJson().map(response -> {
             if(response.getStatus() >= 500) {
-                throwException(response);
+                throw new HttpRequestException(response.getStatusText(), response.getStatus());
             } else if(response.getStatus() == 401) {
                 throw new UnauthorizedRequestException(response.getStatusText(), response.getStatus());
             } else if(response.getStatus() == 400) {
