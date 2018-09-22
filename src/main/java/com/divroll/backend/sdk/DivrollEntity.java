@@ -76,6 +76,70 @@ public class DivrollEntity extends DivrollBase
 
     }
 
+    public Single<Boolean> setBlobProperty(String blobKey, String base64) {
+        if(entityId == null) {
+            return Single.create(e -> {
+                e.onError(new RuntimeException("Save the entity first before setting a Blob property"));
+            });
+        }
+        HttpRequestWithBody httpRequestWithBody = HttpClient.post(Divroll.getServerUrl()
+                + entityStoreBase + "/" + getEntityId() + "/blobs/" + blobKey)
+                .queryString("encoding", "base64");
+
+        if(Divroll.getMasterKey() != null) {
+            httpRequestWithBody.header(HEADER_MASTER_KEY, Divroll.getMasterKey());
+        }
+        if(Divroll.getAppId() != null) {
+            httpRequestWithBody.header(HEADER_APP_ID, Divroll.getAppId());
+        }
+        if(Divroll.getApiKey() != null) {
+            httpRequestWithBody.header(HEADER_API_KEY, Divroll.getApiKey());
+        }
+        if(Divroll.getAuthToken() != null) {
+            httpRequestWithBody.header(HEADER_AUTH_TOKEN, Divroll.getAuthToken());
+        }
+
+        JSONArray aclRead = new JSONArray();
+        JSONArray aclWrite = new JSONArray();
+        if(acl != null) {
+            for(String uuid : this.acl.getAclRead()) {
+                JSONObject entityStub = new JSONObject();
+                entityStub.put("entityId", uuid);
+                aclRead.put(entityStub);
+            }
+            for(String uuid : this.acl.getAclWrite()) {
+                JSONObject entityStub = new JSONObject();
+                entityStub.put("entityId", uuid);
+                aclWrite.put(entityStub);
+            }
+        }
+
+        httpRequestWithBody.header("X-Divroll-ACL-Read", aclRead.toString());
+        httpRequestWithBody.header("X-Divroll-ACL-Write", aclWrite.toString());
+        httpRequestWithBody.header("Content-Type", "application/json");
+
+        return httpRequestWithBody.body(base64).asString().map(response -> {
+            if(response.getStatus() >= 500) {
+                throw new ServerErrorRequestException();
+            } else if(response.getStatus() == 404) {
+                throw new NotFoundRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() == 401) {
+                throw new UnauthorizedRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() == 400) {
+                throw new BadRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() >= 400) {
+                throw new ClientErrorRequestException();
+            } else if(response.getStatus() == 201) {
+                //InputStream responseBody = response.getBody();
+                return true;
+            }
+            return false;
+        });
+
+
+    }
+
+
     public Single<Boolean> setBlobProperty(String blobKey, byte[] value) throws RequestException{
         if(entityId == null) {
             throw new DivrollException("Save the entity first before setting a Blob property");
