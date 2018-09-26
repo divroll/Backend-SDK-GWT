@@ -6,7 +6,6 @@ import com.divroll.backend.sdk.helper.Base64Utils;
 import com.divroll.backend.sdk.helper.JSON;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.json.client.JSONValue;
-import com.google.gwt.user.client.Window;
 import io.reactivex.Single;
 import com.divroll.http.client.*;
 import com.divroll.http.client.exceptions.*;
@@ -35,7 +34,7 @@ public class DivrollEntity extends DivrollBase
         entityStoreBase = entityStoreBase + entityStore;
     }
 
-    public Single<byte[]> getBlobProperty(String blobKey) throws RequestException {
+    public Single<byte[]> getBlobProperty(String blobKey) {
         GetRequest getRequest = (GetRequest) HttpClient.get(Divroll.getServerUrl()
                 + entityStoreBase + "/" + getEntityId() + "/blobs/" + blobKey)
                 .queryString("encoding", "base64");
@@ -140,9 +139,9 @@ public class DivrollEntity extends DivrollBase
     }
 
 
-    public Single<Boolean> setBlobProperty(String blobKey, byte[] value) throws RequestException{
+    public Single<Boolean> setBlobProperty(String blobKey, byte[] value) {
         if(entityId == null) {
-            throw new DivrollException("Save the entity first before setting a Blob property");
+            throw new IllegalArgumentException("Save the entity first before setting a Blob property");
         }
         HttpRequestWithBody httpRequestWithBody = HttpClient.post(Divroll.getServerUrl()
                 + entityStoreBase + "/" + getEntityId() + "/blobs/" + blobKey)
@@ -202,7 +201,7 @@ public class DivrollEntity extends DivrollBase
 
     }
 
-    public Single<Boolean> deleteBlobProperty(String blobKey) throws RequestException {
+    public Single<Boolean> deleteBlobProperty(String blobKey) {
         HttpRequestWithBody getRequest = (HttpRequestWithBody) HttpClient.delete(Divroll.getServerUrl()
                 + entityStoreBase + "/" + getEntityId() + "/blobs/" + blobKey);
         if(Divroll.getMasterKey() != null) {
@@ -427,30 +426,16 @@ public class DivrollEntity extends DivrollBase
 
                             }
                         } else if(propertyKey.equals("aclRead")) {
-                            try {
-                                List<String> value = JSON.aclJSONArrayToList(entityJSONObject.getJSONArray("aclRead"));
-                                divrollEntity.getAcl().setAclRead(value);
-                            } catch (Exception e) {
-
-                            }
-                            try {
-                                List<String> value = Arrays.asList(entityJSONObject.getString("aclRead"));
-                                divrollEntity.getAcl().setAclRead(value);
-                            } catch (Exception e) {
-
+                            List<String> value = JSON.aclJSONArrayToList(entityJSONObject.getJSONArray("aclRead"));
+                            divrollEntity.getAcl().setAclRead(value);
+                            if(value == null) {
+                                divrollEntity.getAcl().setAclRead(Arrays.asList(entityJSONObject.getString("aclRead")));
                             }
                         } else if(propertyKey.equals("aclWrite")) {
-                            try {
-                                List<String> value = JSON.aclJSONArrayToList(entityJSONObject.getJSONArray("aclWrite"));
-                                divrollEntity.getAcl().setAclWrite(value);
-                            } catch (Exception e) {
-
-                            }
-                            try {
-                                List<String> value = Arrays.asList(entityJSONObject.getString("aclWrite"));
-                                divrollEntity.getAcl().setAclWrite(value);
-                            } catch (Exception e) {
-
+                            List<String> value = JSON.aclJSONArrayToList(entityJSONObject.getJSONArray("aclWrite"));
+                            divrollEntity.getAcl().setAclWrite(value);
+                            if(value == null) {
+                                divrollEntity.getAcl().setAclWrite(Arrays.asList(entityJSONObject.getString("aclWrite")));
                             }
                         } else {
                             divrollEntity.setProperty(propertyKey, entityJSONObject.get(propertyKey));
@@ -710,6 +695,9 @@ public class DivrollEntity extends DivrollBase
     }
 
     public DivrollACL getAcl() {
+        if(acl == null) {
+            acl = new DivrollACL();
+        }
         return acl;
     }
 
@@ -790,7 +778,7 @@ public class DivrollEntity extends DivrollBase
 
     }
 
-    public Single<Boolean> update() throws RequestException {
+    public Single<Boolean> update() {
         String completeUrl = Divroll.getServerUrl() + entityStoreBase + "/" + getEntityId();
         HttpRequestWithBody httpRequestWithBody = HttpClient.put(completeUrl);
         if(Divroll.getMasterKey() != null) {
@@ -852,7 +840,7 @@ public class DivrollEntity extends DivrollBase
 
     }
 
-    public Single<DivrollEntity> retrieve() throws RequestException {
+    public Single<DivrollEntity> retrieve() {
         String completeUrl = Divroll.getServerUrl() + entityStoreBase + "/" + getEntityId();
         GetRequest getRequest = (GetRequest) HttpClient.get(completeUrl);
 
@@ -930,7 +918,7 @@ public class DivrollEntity extends DivrollBase
 
     }
 
-    public Single<Boolean> delete() throws RequestException{
+    public Single<Boolean> delete() {
         String completeUrl = Divroll.getServerUrl() + entityStoreBase + "/" + getEntityId();
         HttpRequestWithBody httpRequestWithBody = HttpClient.delete(completeUrl);
         if(Divroll.getMasterKey() != null) {

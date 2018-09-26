@@ -148,30 +148,16 @@ public class DivrollEntities extends DivrollBase
 
                             }
                         } else if(propertyKey.equals("aclRead")) {
-                            try {
-                                List<String> value = JSON.aclJSONArrayToList(entityJSONObject.getJSONArray("aclRead"));
-                                divrollEntity.getAcl().setAclRead(value);
-                            } catch (Exception e) {
-
-                            }
-                            try {
-                                List<String> value = Arrays.asList(entityJSONObject.getString("aclRead"));
-                                divrollEntity.getAcl().setAclRead(value);
-                            } catch (Exception e) {
-
+                            List<String> value = JSON.aclJSONArrayToList(entityJSONObject.getJSONArray("aclRead"));
+                            divrollEntity.getAcl().setAclRead(value);
+                            if(value == null) {
+                                divrollEntity.getAcl().setAclRead(Arrays.asList(entityJSONObject.getString("aclRead")));
                             }
                         } else if(propertyKey.equals("aclWrite")) {
-                            try {
-                                List<String> value = JSON.aclJSONArrayToList(entityJSONObject.getJSONArray("aclWrite"));
-                                divrollEntity.getAcl().setAclWrite(value);
-                            } catch (Exception e) {
-
-                            }
-                            try {
-                                List<String> value = Arrays.asList(entityJSONObject.getString("aclWrite"));
-                                divrollEntity.getAcl().setAclWrite(value);
-                            } catch (Exception e) {
-
+                            List<String> value = JSON.aclJSONArrayToList(entityJSONObject.getJSONArray("aclWrite"));
+                            divrollEntity.getAcl().setAclWrite(value);
+                            if(value == null) {
+                                divrollEntity.getAcl().setAclWrite(Arrays.asList(entityJSONObject.getString("aclWrite")));
                             }
                         } else {
                             divrollEntity.setProperty(propertyKey, entityJSONObject.get(propertyKey));
