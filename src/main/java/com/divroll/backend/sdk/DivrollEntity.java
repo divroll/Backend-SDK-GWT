@@ -367,10 +367,10 @@ public class DivrollEntity extends DivrollBase
         return value;
     }
 
-    public Single<List<DivrollEntity>> links(String linkName) throws RequestException {
+    public Single<List<DivrollEntity>> links(String linkName)  {
         List<DivrollEntity> entities = new LinkedList<DivrollEntity>();
         if(entityId == null) {
-            throw new DivrollException("Save the entity first before getting links");
+            throw new IllegalArgumentException("Save the entity first before getting links");
         }
         String completeUrl = Divroll.getServerUrl() + entityStoreBase + "/" + getEntityId() + "/links/" + linkName;
 
@@ -448,10 +448,10 @@ public class DivrollEntity extends DivrollBase
         });
     }
 
-    public Single<List<DivrollEntity>> getEntities(String linkName) throws RequestException  {
+    public Single<List<DivrollEntity>> getEntities(String linkName)   {
         List<DivrollEntity> entities = new LinkedList<DivrollEntity>();
         if(entityId == null) {
-            throw new DivrollException("Save the entity first before getting links");
+            throw new IllegalArgumentException("Save the entity first before getting links");
         }
         DivrollEntity divrollEntity = new DivrollEntity();
         String completeUrl = Divroll.getServerUrl() + entityStoreBase + "/" + getEntityId() + "/links/" + linkName;
@@ -522,9 +522,9 @@ public class DivrollEntity extends DivrollBase
 
     }
 
-    public Single<Boolean> addLink(String linkName, String entityId) throws RequestException  {
+    public Single<Boolean> addLink(String linkName, String entityId)   {
         if(entityId == null) {
-            throw new DivrollException("Save the entity first before creating a link");
+            throw new IllegalArgumentException("Save the entity first before creating a link");
         }
         HttpRequestWithBody httpRequestWithBody = HttpClient.post(Divroll.getServerUrl()
                 + entityStoreBase + "/" + getEntityId() + "/links/" + linkName + "/" + entityId);
@@ -579,9 +579,9 @@ public class DivrollEntity extends DivrollBase
 
     }
 
-    public Single<Boolean> removeLink(String linkName, String entityId) throws RequestException  {
+    public Single<Boolean> removeLink(String linkName, String entityId)   {
         if(entityId == null) {
-            throw new DivrollException("Save the entity first before removing a link");
+            throw new IllegalArgumentException("Save the entity first before removing a link");
         }
         HttpRequestWithBody httpRequestWithBody = HttpClient.delete(Divroll.getServerUrl()
                 + entityStoreBase + "/" + getEntityId() + "/links/" + linkName + "/" + entityId);
@@ -636,9 +636,9 @@ public class DivrollEntity extends DivrollBase
 
     }
 
-    public Single<Boolean> removeLinks(String linkName) throws RequestException  {
+    public Single<Boolean> removeLinks(String linkName)   {
         if(entityId == null) {
-            throw new DivrollException("Save the entity first before removing links");
+            throw new IllegalArgumentException("Save the entity first before removing links");
         }
         HttpRequestWithBody httpRequestWithBody = HttpClient.delete(Divroll.getServerUrl()
                 + entityStoreBase + "/" + getEntityId() + "/links/" + linkName);
@@ -713,7 +713,7 @@ public class DivrollEntity extends DivrollBase
         this.entityId = entityId;
     }
 
-    public Single<DivrollEntity> create() throws RequestException {
+    public Single<DivrollEntity> create()  {
         HttpRequestWithBody httpRequestWithBody = HttpClient.post(Divroll.getServerUrl() + entityStoreBase);
         if(Divroll.getMasterKey() != null) {
             httpRequestWithBody.header(HEADER_MASTER_KEY, Divroll.getMasterKey());
@@ -949,7 +949,7 @@ public class DivrollEntity extends DivrollBase
         });
     }
 
-    public Single<Boolean> deleteProperty(String propertyName) throws RequestException {
+    public Single<Boolean> deleteProperty(String propertyName)  {
         String completeUrl = Divroll.getServerUrl() + entityStoreBase + "/" + getEntityId() + "/properties/" + propertyName;
         HttpRequestWithBody httpRequestWithBody = HttpClient.delete(completeUrl);
         if(Divroll.getMasterKey() != null) {

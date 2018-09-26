@@ -57,7 +57,7 @@ public class DivrollEntities extends DivrollBase
         this.limit = limit;
     }
 
-    public Single<Boolean> delete() throws RequestException {
+    public Single<Boolean> delete()  {
         String completeUrl = Divroll.getServerUrl()
                 + entityStoreUrl + entityStore;
         HttpRequestWithBody httpRequestWithBody = HttpClient.delete(completeUrl);
@@ -89,7 +89,7 @@ public class DivrollEntities extends DivrollBase
         });
     }
 
-    public Single<DivrollEntities> query() throws RequestException {
+    public Single<DivrollEntities> query()  {
         String completeUrl = Divroll.getServerUrl()
                 + entityStoreUrl + entityStore;;
         GetRequest getRequest = (GetRequest) HttpClient.get(completeUrl);

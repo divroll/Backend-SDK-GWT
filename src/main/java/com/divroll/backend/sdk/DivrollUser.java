@@ -33,7 +33,7 @@ public class DivrollUser extends DivrollBase
     private DivrollACL acl;
     private List<DivrollRole> roles;
 
-    public Single<DivrollUser> create(String username, String password) throws RequestException {
+    public Single<DivrollUser> create(String username, String password)  {
 
         setUsername(username);
         setPassword(password);
@@ -160,7 +160,7 @@ public class DivrollUser extends DivrollBase
 
     }
 
-    public Single<DivrollUser> retrieve() throws RequestException  {
+    public Single<DivrollUser> retrieve()   {
         return Single.create(new SingleOnSubscribe<DivrollUser>() {
             @Override
             public void subscribe(SingleEmitter<DivrollUser> emitter) throws Exception {
@@ -227,7 +227,7 @@ public class DivrollUser extends DivrollBase
 
     }
 
-    public Single<Boolean> update(String newUsername, String newPassword) throws RequestException {
+    public Single<Boolean> update(String newUsername, String newPassword) {
         return Single.create(new SingleOnSubscribe<Boolean>() {
             @Override
             public void subscribe(SingleEmitter<Boolean> emitter) throws Exception {
@@ -348,11 +348,11 @@ public class DivrollUser extends DivrollBase
         });
     }
 
-    public Single<Boolean> update() throws RequestException {
+    public Single<Boolean> update()  {
         return update(null, null);
     }
 
-    public Single<Boolean> delete() throws RequestException {
+    public Single<Boolean> delete()  {
         return Single.create(new SingleOnSubscribe<Boolean>() {
             @Override
             public void subscribe(SingleEmitter<Boolean> emitter) throws Exception {
@@ -400,7 +400,7 @@ public class DivrollUser extends DivrollBase
 
     }
 
-    public Single<DivrollUser> login(String username, String password) throws RequestException  {
+    public Single<DivrollUser> login(String username, String password)   {
         return Single.create(new SingleOnSubscribe<DivrollUser>() {
             @Override
             public void subscribe(SingleEmitter<DivrollUser> emitter) throws Exception {

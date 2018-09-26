@@ -32,7 +32,7 @@ public class DivrollRole extends DivrollBase
         setName(name);
     }
 
-    public Single<DivrollRole> create() throws RequestException {
+    public Single<DivrollRole> create()  {
 
         HttpRequestWithBody httpRequestWithBody = HttpClient.post(Divroll.getServerUrl() + rolesUrl);
         if(Divroll.getMasterKey() != null) {
@@ -110,7 +110,7 @@ public class DivrollRole extends DivrollBase
         });
 
     }
-    public Single<Boolean> update() throws RequestException {
+    public Single<Boolean> update()  {
         HttpRequestWithBody httpRequestWithBody = HttpClient.put(Divroll.getServerUrl() + rolesUrl + "/" + getEntityId());
         if(Divroll.getMasterKey() != null) {
             httpRequestWithBody.header(HEADER_MASTER_KEY, Divroll.getMasterKey());
@@ -164,7 +164,7 @@ public class DivrollRole extends DivrollBase
 
     }
 
-    public Single<Boolean> delete() throws RequestException {
+    public Single<Boolean> delete()  {
         HttpRequestWithBody httpRequestWithBody = HttpClient.delete(Divroll.getServerUrl()
                 + rolesUrl + "/" + getEntityId());
         if(Divroll.getMasterKey() != null) {
@@ -191,7 +191,7 @@ public class DivrollRole extends DivrollBase
         });
     }
 
-    public Single<DivrollRole> retrieve() throws RequestException  {
+    public Single<DivrollRole> retrieve()   {
         GetRequest getRequest = (GetRequest) HttpClient.get(Divroll.getServerUrl()
                 + rolesUrl + "/" + getEntityId());
 

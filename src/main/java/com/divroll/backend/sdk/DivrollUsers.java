@@ -55,7 +55,7 @@ public class DivrollUsers extends DivrollBase
         this.limit = limit;
     }
 
-    public Single<DivrollUsers> query() throws RequestException {
+    public Single<DivrollUsers> query()  {
         String completeUrl = Divroll.getServerUrl() + usersUrl;
 
         GetRequest getRequest = (GetRequest) HttpClient.get(completeUrl);

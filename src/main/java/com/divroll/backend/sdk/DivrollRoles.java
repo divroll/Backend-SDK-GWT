@@ -55,7 +55,7 @@ public class DivrollRoles extends DivrollBase
         this.limit = limit;
     }
 
-    public Single<DivrollRoles> query() throws RequestException {
+    public Single<DivrollRoles> query()  {
         GetRequest getRequest = (GetRequest) HttpClient.get(Divroll.getServerUrl()
                 + rolesUrl);
 
