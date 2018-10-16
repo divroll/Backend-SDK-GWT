@@ -1,7 +1,5 @@
 package com.divroll.backend.sdk;
 
-import com.divroll.backend.sdk.helper.JSON;
-import com.google.gwt.http.client.RequestException;
 import elemental.client.Browser;
 import io.reactivex.Single;
 import io.reactivex.SingleEmitter;
@@ -530,50 +528,40 @@ public class DivrollUser extends DivrollBase
     }
 
     public Single<DivrollUser> login(String username, String password)   {
-        return Single.create(new SingleOnSubscribe<DivrollUser>() {
-            @Override
-            public void subscribe(SingleEmitter<DivrollUser> emitter) throws Exception {
-                setUsername(username);
-                setPassword(password);
-                GetRequest getRequest = (GetRequest) HttpClient.get(Divroll.getServerUrl() + loginUrl)
-                        .queryString("username", getUsername())
-                        .queryString("password", getPassword());
-                if(Divroll.getMasterKey() != null) {
-                    getRequest.header(HEADER_MASTER_KEY, Divroll.getMasterKey());
-                }
-                if(Divroll.getAppId() != null) {
-                    getRequest.header(HEADER_APP_ID, Divroll.getAppId());
-                }
-                if(Divroll.getApiKey() != null) {
-                    getRequest.header(HEADER_API_KEY, Divroll.getApiKey());
-                }
-                Single<HttpResponse<JsonNode>> responseSingle = getRequest.asJson();
-                responseSingle.subscribe(new Consumer<HttpResponse<JsonNode>>() {
-                    @Override
-                    public void accept(HttpResponse<JsonNode> response) throws Exception {
-                        if(response.getStatus() >= 500) {
-                            emitter.onError(new ServerErrorRequestException());
-                        } else if(response.getStatus() == 404) {
-                            emitter.onError(new NotFoundRequestException(response.getStatusText(), response.getStatus()));
-                        } else if(response.getStatus() == 401) {
-                            emitter.onError(new UnauthorizedRequestException(response.getStatusText(), response.getStatus()));
-                        } else if(response.getStatus() == 200) {
-                            JsonNode body = response.getBody();
-                            JSONObject bodyObj = body.getObject();
-                            JSONObject user = bodyObj.getJSONObject("user");
-                            String entityId = user.getString("entityId");
-                            String webToken = user.getString("webToken");
-                            setEntityId(entityId);
-                            setAuthToken(webToken);
-                            Divroll.setAuthToken(webToken);
-                            emitter.onSuccess(copy());
-                        }
-                    }
-                });
+        setUsername(username);
+        setPassword(password);
+        GetRequest getRequest = (GetRequest) HttpClient.get(Divroll.getServerUrl() + loginUrl)
+                .queryString("username", getUsername())
+                .queryString("password", getPassword());
+        if(Divroll.getMasterKey() != null) {
+            getRequest.header(HEADER_MASTER_KEY, Divroll.getMasterKey());
+        }
+        if(Divroll.getAppId() != null) {
+            getRequest.header(HEADER_APP_ID, Divroll.getAppId());
+        }
+        if(Divroll.getApiKey() != null) {
+            getRequest.header(HEADER_API_KEY, Divroll.getApiKey());
+        }
+
+        return getRequest.asJson().map(response -> {
+            if(response.getStatus() >= 500) {
+                throw new ServerErrorRequestException();
+            } else if(response.getStatus() == 404) {
+                throw new NotFoundRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() == 401) {
+                throw new UnauthorizedRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() == 200) {
+                JsonNode body = response.getBody();
+                JSONObject bodyObj = body.getObject();
+                JSONObject user = bodyObj.getJSONObject("user");
+                String entityId = user.getString("entityId");
+                String webToken = user.getString("webToken");
+                setEntityId(entityId);
+                setAuthToken(webToken);
+                Divroll.setAuthToken(webToken);
             }
+            return copy();
         });
-
-
     }
 
     public void logout() {
@@ -638,7 +626,7 @@ public class DivrollUser extends DivrollBase
         String username = getUsername();
         String password = getPassword();
         String authToken = getAuthToken();
-        String acl = getAcl().toString();
+        String acl = String.valueOf(getAcl());
         s[0] = s[0] + "className=" + getClass().getName() + "\n";
         s[0] = s[0] + "entityId=" + entityId + "\n";
         s[0] = s[0] + "email=" + email + "\n";
@@ -646,7 +634,7 @@ public class DivrollUser extends DivrollBase
         s[0] = s[0] + "password=" + password + "\n";
         s[0] = s[0] + "authToken=" + authToken + "\n";
         s[0] = s[0] + "acl=" + acl + "\n";
-        getRoles().forEach(divrollRole -> { s[0] = s[0] + divrollRole.toString() + "\n";});
+        getRoles().forEach(divrollRole -> { s[0] = s[0] + String.valueOf(divrollRole) + "\n";});
         return s[0];
     }
 
