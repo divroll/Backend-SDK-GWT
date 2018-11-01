@@ -155,6 +155,11 @@ public class DivrollUsers extends DivrollBase
                         user.setRoles(divrollRoles);
                         user.setUsername(username);
 
+                        String dateCreated = userObj.getString("dateCreated");
+                        String dateUpdated = userObj.getString("dateUpdated");
+                        user.setDateCreated(dateCreated);
+                        user.setDateUpdated(dateUpdated);
+
                         List<DivrollUser> divrollUsers = getUsers();
                         divrollUsers.add(user);
                         setUsers(divrollUsers);

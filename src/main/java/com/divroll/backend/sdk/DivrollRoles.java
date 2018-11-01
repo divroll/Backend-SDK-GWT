@@ -113,6 +113,11 @@ public class DivrollRoles extends DivrollBase
                     role.setName(name);
                     role.setAcl(acl);
 
+                    String dateCreated = roleObj.getString("dateCreated");
+                    String dateUpdated = roleObj.getString("dateUpdated");
+                    role.setDateCreated(dateCreated);
+                    role.setDateUpdated(dateUpdated);
+
                     List<DivrollRole> divrollRoles = getRoles();
                     divrollRoles.add(role);
                     setRoles(divrollRoles);

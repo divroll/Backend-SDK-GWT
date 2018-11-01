@@ -1,5 +1,6 @@
 package com.divroll.backend.sdk;
 
+import com.google.gwt.user.client.Cookies;
 import elemental.client.Browser;
 import io.reactivex.Single;
 import io.reactivex.SingleEmitter;
@@ -344,6 +345,11 @@ public class DivrollUser extends DivrollBase
                             setAcl(acl);
                             setRoles(divrollRoles);
 
+                            String dateCreated = userJsonObj.getString("dateCreated");
+                            String dateUpdated = userJsonObj.getString("dateUpdated");
+                            setDateCreated(dateCreated);
+                            setDateUpdated(dateUpdated);
+
                             emitter.onSuccess(copy());
 
                         }
@@ -530,7 +536,126 @@ public class DivrollUser extends DivrollBase
 
     }
 
-    public Single<DivrollUser> login(String username, String password)   {
+    public static Single<DivrollUser> currentUser() {
+        if(Divroll.getCurrentUser() != null) {
+            return Single.create(e -> {
+               e.onSuccess(Divroll.getCurrentUser());
+            });
+        } else {
+            DivrollUser divrollUser = new DivrollUser();
+            return divrollUser.login();
+        }
+    }
+
+    public Single<DivrollUser> login() {
+
+        GetRequest getRequest = (GetRequest) HttpClient.get(Divroll.getServerUrl() + loginUrl);
+        if(Divroll.getMasterKey() != null) {
+            getRequest.header(HEADER_MASTER_KEY, Divroll.getMasterKey());
+        }
+        if(Divroll.getAppId() != null) {
+            getRequest.header(HEADER_APP_ID, Divroll.getAppId());
+        }
+        if(Divroll.getApiKey() != null) {
+            getRequest.header(HEADER_API_KEY, Divroll.getApiKey());
+        }
+
+        String authToken = Divroll.getAuthToken() != null
+                ? Divroll.getAuthToken() : Cookies.getCookie("authToken");
+        if(authToken == null) {
+            return Single.create(e -> {
+                e.onError(new IllegalArgumentException("Missing auth token error"));
+            });
+        }
+        boolean remember = false;
+        if(authToken != null) {
+            remember = true;
+            getRequest.header(HEADER_AUTH_TOKEN, authToken);
+        }
+
+        boolean finalRemember = remember;
+        return getRequest.asJson().map(response -> {
+            if(response.getStatus() >= 500) {
+                throw new ServerErrorRequestException();
+            } else if(response.getStatus() == 404) {
+                throw new NotFoundRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() == 401) {
+                throw new UnauthorizedRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() == 200) {
+                JsonNode body = response.getBody();
+                JSONObject bodyObj = body.getObject();
+                JSONObject user = bodyObj.getJSONObject("user");
+                String entityId = user.getString("entityId");
+                String webToken = user.getString("webToken");
+                String username = user.getString("username");
+
+                Boolean publicRead = user.getBoolean("publicRead");
+                Boolean publicWrite = user.getBoolean("publicWrite");
+
+                List<String> aclWriteList = aclWriteFrom(user);
+                List<String> aclReadList =  aclReadFrom(user);
+
+                JSONArray userRoles = null;
+                try {
+                    userRoles = user.getJSONArray("roles");
+                } catch (Exception e) {
+
+                }
+
+                List<DivrollRole> divrollRoles = null;
+                try {
+                    if(userRoles != null) {
+                        Object roleObjects = user.get("roles");
+                        if(roleObjects instanceof JSONArray) {
+                            divrollRoles = new LinkedList<DivrollRole>();
+                            for(int j=0;j<userRoles.length();j++) {
+                                JSONObject jsonObject = userRoles.getJSONObject(j);
+                                String roleId = jsonObject.getString("entityId");
+                                DivrollRole divrollRole = new DivrollRole();
+                                divrollRole.setEntityId(roleId);
+                                divrollRoles.add(divrollRole);
+                            }
+                        } else if(roleObjects instanceof JSONObject) {
+                            divrollRoles = new LinkedList<DivrollRole>();
+                            JSONObject jsonObject = (JSONObject) roleObjects;
+                            String roleId = jsonObject.getString("entityId");
+                            DivrollRole divrollRole = new DivrollRole();
+                            divrollRole.setEntityId(roleId);
+                            divrollRoles.add(divrollRole);
+                        }
+                    }
+
+                } catch (Exception e) {
+                    // do nothing
+                }
+
+                setRoles(divrollRoles);
+
+                DivrollACL acl = new DivrollACL(aclReadList, aclWriteList);
+                acl.setPublicWrite(publicWrite);
+                acl.setPublicRead(publicRead);
+
+                setEntityId(entityId);
+                setAuthToken(webToken);
+                setUsername(username);
+                setAcl(acl);
+
+                Divroll.setCurrentUser(copy());
+                Divroll.setAuthToken(webToken);
+                if(finalRemember) {
+                    Cookies.setCookie("authToken", authToken);
+                }
+
+            }
+            return copy();
+        });
+    }
+
+//    public Single<DivrollUser> login(boolean remember) {
+//        return login(Divroll.getAuthToken(), remember);
+//    }
+
+    public Single<DivrollUser> login(String username, String password, boolean remember)   {
         setUsername(username);
         setPassword(password);
         GetRequest getRequest = (GetRequest) HttpClient.get(Divroll.getServerUrl() + loginUrl)
@@ -562,12 +687,18 @@ public class DivrollUser extends DivrollBase
                 setEntityId(entityId);
                 setAuthToken(webToken);
                 Divroll.setAuthToken(webToken);
+                Divroll.setCurrentUser(copy());
+                if(remember) {
+                    Cookies.setCookie("authToken", authToken);
+                }
             }
             return copy();
         });
     }
 
-    public void logout() {
+    public static void logout() {
+        Cookies.removeCookie("authToken");
+        Divroll.setCurrentUser(null);
         Divroll.setAuthToken(null);
     }
 

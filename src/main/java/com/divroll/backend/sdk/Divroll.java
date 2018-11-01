@@ -1,5 +1,7 @@
 package com.divroll.backend.sdk;
 
+import com.google.gwt.user.client.Cookies;
+
 public class Divroll {
 
     private static String divrollServerUrl;
@@ -7,6 +9,7 @@ public class Divroll {
     private static String applicationKey;
     private static String applicationMasterKey;
     private static String authenticationToken;
+    private static DivrollUser currentUser = null;
 
     private Divroll() {}
 
@@ -60,4 +63,11 @@ public class Divroll {
         return $wnd.divrollServerUrl;
     }-*/;
 
+    public static DivrollUser getCurrentUser() {
+        return currentUser;
+    }
+
+    public static void setCurrentUser(DivrollUser currentUser) {
+        Divroll.currentUser = currentUser;
+    }
 }

@@ -107,6 +107,12 @@ public class DivrollRole extends DivrollBase
                 setEntityId(entityId);
                 setName(name);
                 setAcl(acl);
+
+                String dateCreated = role.getString("dateCreated");
+                String dateUpdated = role.getString("dateUpdated");
+                setDateCreated(dateCreated);
+                setDateUpdated(dateUpdated);
+
             }
             return copy();
         });
