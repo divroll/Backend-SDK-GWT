@@ -25,6 +25,8 @@ public class DivrollRole extends DivrollBase
     private String entityId;
     private String name;
     private DivrollACL acl;
+    private String dateCreated;
+    private String dateUpdated;
 
     public DivrollRole() {}
 
@@ -288,4 +290,19 @@ public class DivrollRole extends DivrollBase
         return s[0];
     }
 
+    public String getDateCreated() {
+        return dateCreated;
+    }
+
+    public void setDateCreated(String dateCreated) {
+        this.dateCreated = dateCreated;
+    }
+
+    public String getDateUpdated() {
+        return dateUpdated;
+    }
+
+    public void setDateUpdated(String dateUpdated) {
+        this.dateUpdated = dateUpdated;
+    }
 }

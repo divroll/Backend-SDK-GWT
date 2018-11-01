@@ -25,6 +25,8 @@ public class DivrollEntity extends DivrollBase
     private DivrollACL acl;
     private List<String> linkNames;
     private List<String> blobNames;
+    private String dateCreated;
+    private String dateUpdated;
 
     private JSONObject entityObj = new JSONObject();
 
@@ -500,6 +502,8 @@ public class DivrollEntity extends DivrollBase
                         setEntityId(entityJsonObject.getString(propertyKey));
                     } else if (propertyKey.equals("publicRead")
                             || propertyKey.equals("publicWrite")
+                            || propertyKey.equals("dateCreated")
+                            || propertyKey.equals("dateUpdated")
                             || propertyKey.equals("aclRead")
                             || propertyKey.equals("aclWrite")) {
                         // skip
@@ -514,6 +518,12 @@ public class DivrollEntity extends DivrollBase
                 acl.setPublicRead(publicRead);
                 divrollEntity.setEntityId(entityId);
                 divrollEntity.setAcl(acl);
+
+                String dateCreated = entityJsonObject.getString("dateCreated");
+                String dateUpdated = entityJsonObject.getString("dateUpdated");
+                divrollEntity.setDateCreated(dateCreated);
+                divrollEntity.setDateUpdated(dateUpdated);
+
 
             }
             return entities;
@@ -771,6 +781,10 @@ public class DivrollEntity extends DivrollBase
                 JSONObject bodyObj = responseBody.getObject();
                 JSONObject entity = bodyObj.getJSONObject("entity");
                 String entityId = entity.getString("entityId");
+                String dateCreated = entity.getString("dateCreated");
+                String dateUpdated = entity.getString("dateUpdated");
+                setDateCreated(dateCreated);
+                setDateUpdated(dateUpdated);
                 setEntityId(entityId);
             }
             return copy();
@@ -912,6 +926,12 @@ public class DivrollEntity extends DivrollBase
                 acl.setPublicRead(publicRead);
                 setEntityId(entityId);
                 setAcl(acl);
+
+                String dateCreated = entityJsonObject.getString("dateCreated");
+                String dateUpdated = entityJsonObject.getString("dateUpdated");
+                setDateCreated(dateCreated);
+                setDateUpdated(dateUpdated);
+
             }
             return copy();
         });
@@ -1009,5 +1029,21 @@ public class DivrollEntity extends DivrollBase
 
     private void setBlobNames(List<String> blobNames) {
         this.blobNames = blobNames;
+    }
+
+    public String getDateCreated() {
+        return dateCreated;
+    }
+
+    public void setDateCreated(String dateCreated) {
+        this.dateCreated = dateCreated;
+    }
+
+    public String getDateUpdated() {
+        return dateUpdated;
+    }
+
+    public void setDateUpdated(String dateUpdated) {
+        this.dateUpdated = dateUpdated;
     }
 }

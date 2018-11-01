@@ -32,6 +32,9 @@ public class DivrollUser extends DivrollBase
     private DivrollACL acl;
     private List<DivrollRole> roles;
 
+    private String dateCreated;
+    private String dateUpdated;
+
     public Single<DivrollUser> create(String username, String password)  {
 
         setUsername(username);
@@ -650,5 +653,21 @@ public class DivrollUser extends DivrollBase
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getDateCreated() {
+        return dateCreated;
+    }
+
+    public void setDateCreated(String dateCreated) {
+        this.dateCreated = dateCreated;
+    }
+
+    public String getDateUpdated() {
+        return dateUpdated;
+    }
+
+    public void setDateUpdated(String dateUpdated) {
+        this.dateUpdated = dateUpdated;
     }
 }
