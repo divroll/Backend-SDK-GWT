@@ -586,7 +586,7 @@ public class DivrollUser extends DivrollBase
                 JSONObject bodyObj = body.getObject();
                 JSONObject user = bodyObj.getJSONObject("user");
                 String entityId = user.getString("entityId");
-                String webToken = user.getString("webToken");
+                //String webToken = user.getString("webToken");
                 String username = user.getString("username");
 
                 Boolean publicRead = user.getBoolean("publicRead");
@@ -636,12 +636,12 @@ public class DivrollUser extends DivrollBase
                 acl.setPublicRead(publicRead);
 
                 setEntityId(entityId);
-                setAuthToken(webToken);
+                setAuthToken(authToken);
                 setUsername(username);
                 setAcl(acl);
 
                 Divroll.setCurrentUser(copy());
-                Divroll.setAuthToken(webToken);
+                Divroll.setAuthToken(authToken);
                 if(finalRemember) {
                     Cookies.setCookie("authToken", authToken);
                 }
