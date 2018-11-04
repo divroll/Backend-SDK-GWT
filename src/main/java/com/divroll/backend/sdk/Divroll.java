@@ -25,9 +25,11 @@ public class Divroll {
     }
 
     public static String getServerUrl() {
-        divrollServerUrl = getDivrollServerUrlFromJs();
         if(divrollServerUrl == null) {
-            divrollServerUrl = "http://localhost:8080/divroll";
+            divrollServerUrl = getDivrollServerUrlFromJs();
+            if(divrollServerUrl == null) {
+                divrollServerUrl = "http://localhost:8080/divroll";
+            }
         }
         return divrollServerUrl;
     }

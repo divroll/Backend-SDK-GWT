@@ -112,7 +112,7 @@ public class DivrollUsersTest extends GWTTestCase {
                                 Browser.getWindow().getConsole().log("Query Test:" + new DivrollUsers());
                                 Browser.getWindow().getConsole().log("Query Result:" + queryUsers.toString());
                                 assertEquals(0, queryUsers.getUsers().size());
-                                createdAdminUser.login(adminUsername, "password").subscribe(loggedInUser -> {
+                                createdAdminUser.login(adminUsername, "password", true).subscribe(loggedInUser -> {
                                     assertNotNull(loggedInUser.getAuthToken());
                                     DivrollUsers divrollUsers = new DivrollUsers();
                                     divrollUsers.query().subscribe(divrollUsers1 -> {

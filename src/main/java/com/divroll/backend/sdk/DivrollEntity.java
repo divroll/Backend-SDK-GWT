@@ -30,11 +30,16 @@ public class DivrollEntity extends DivrollBase
 
     private JSONObject entityObj = new JSONObject();
 
+    private String entityType;
+
     private DivrollEntity() {}
 
     public DivrollEntity(String entityStore) {
         entityStoreBase = entityStoreBase + entityStore;
+        entityType = entityStore;
     }
+
+
 
     public Single<byte[]> getBlobProperty(String blobKey) {
         GetRequest getRequest = (GetRequest) HttpClient.get(Divroll.getServerUrl()
@@ -325,6 +330,10 @@ public class DivrollEntity extends DivrollBase
             return null;
         }
         return (String) value;
+    }
+
+    public JSONObject getProperties() {
+        return entityObj;
     }
 
     public Object getProperty(String propertyName) {
@@ -1045,5 +1054,9 @@ public class DivrollEntity extends DivrollBase
 
     public void setDateUpdated(String dateUpdated) {
         this.dateUpdated = dateUpdated;
+    }
+
+    public String getEntityType() {
+        return entityType;
     }
 }

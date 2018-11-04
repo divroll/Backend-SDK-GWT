@@ -248,7 +248,7 @@ public class DivrollUserTest extends GWTTestCase {
                     assertNotNull(divrollRole1.getEntityId());
                     assertTrue(divrollRole1.getAcl().getAclWrite().contains("0-0"));
                     assertTrue(divrollRole1.getAcl().getPublicRead());
-                    divrollUser1.login("admin", "password").subscribe(divrollUser2 -> {
+                    divrollUser1.login("admin", "password", true).subscribe(divrollUser2 -> {
                         assertNotNull(divrollUser2.getAuthToken());
                         assertNotNull(Divroll.getAuthToken());
                         divrollRole1.retrieve().subscribe(divrollRole2 -> {
@@ -360,7 +360,7 @@ public class DivrollUserTest extends GWTTestCase {
                     assertNotNull(createdUser.getEntityId());
                     assertTrue(createdUser.getAcl().getAclWrite().contains("0-0"));
                     assertTrue(createdUser.getAcl().getAclRead().contains("0-0"));
-                    createdAdminUser.login("admin", "password").subscribe(loggedInUser -> {
+                    createdAdminUser.login("admin", "password", true).subscribe(loggedInUser -> {
                         assertNotNull(loggedInUser.getAuthToken());
                         createdUser.update("new_username", "new_password").subscribe(isUpdated -> {
                             if(isUpdated) {
@@ -441,7 +441,7 @@ public class DivrollUserTest extends GWTTestCase {
                     divrollACL.setAclWrite(Arrays.asList(createdAdminUser.getEntityId()));
                     createdUser.setAcl(divrollACL);
 
-                    createdAdminUser.login("admin", "password").subscribe(loggedInUser -> {
+                    createdAdminUser.login("admin", "password", true).subscribe(loggedInUser -> {
                         assertNotNull(loggedInUser.getAuthToken());
                         createdUser.update().subscribe(isUpdated -> {
                             if(isUpdated) {
@@ -548,7 +548,7 @@ public class DivrollUserTest extends GWTTestCase {
                     adminUser.getRoles().add(createdManagerRole);
                     adminUser.create("admin", "password").subscribe(createdAdminUser -> {
                         assertEquals(2, createdAdminUser.getRoles().size());
-                        createdAdminUser.login("admin", "password").subscribe(loggedInUser -> {
+                        createdAdminUser.login("admin", "password", true).subscribe(loggedInUser -> {
                             assertNotNull(loggedInUser.getEntityId());
                             loggedInUser.setRoles(Arrays.asList(createdManagerRole));
                             loggedInUser.update().subscribe(isUpdated -> {
@@ -591,7 +591,7 @@ public class DivrollUserTest extends GWTTestCase {
                     divrollUser.create("user", "password").subscribe(createdUser -> {
                         assertNotNull(createdUser.getEntityId());
 
-                        createdAdminUser.login("admin", "password").subscribe(loggedInUser -> {
+                        createdAdminUser.login("admin", "password", true).subscribe(loggedInUser -> {
                             assertNotNull(createdAdminUser.getAuthToken());
                             assertNotNull(Divroll.getAuthToken());
                             createdUser.update("new_username", "new_password").subscribe(isUpdated -> {
@@ -644,7 +644,7 @@ public class DivrollUserTest extends GWTTestCase {
             DivrollUser adminUser = new DivrollUser();
             adminUser.setAcl(DivrollACL.buildMasterKeyOnly());
             adminUser.create("admin", "password").subscribe(createdAdminUser -> {
-                createdAdminUser.login("admin", "password").subscribe(loggedInUser -> {
+                createdAdminUser.login("admin", "password", true).subscribe(loggedInUser -> {
                     DivrollUser divrollUser = new DivrollUser();
                     divrollUser.setAcl(DivrollACL.buildPublicReadWrite());
                     divrollUser.create("user", "password").subscribe(createdUser -> {
@@ -713,7 +713,7 @@ public class DivrollUserTest extends GWTTestCase {
                     divrollUser.create("username", "password").subscribe(createdUser -> {
                         assertNotNull(createdUser.getEntityId());
                         assertNotNull(ACLHelper.containsId(adminRole.getEntityId(), createdUser.getAcl().getAclWrite()));
-                        createdAdminUser.login("admin", "password").subscribe(loggedInUser -> {
+                        createdAdminUser.login("admin", "password", true).subscribe(loggedInUser -> {
                             assertNotNull(loggedInUser.getAuthToken());
                             assertNotNull(Divroll.getAuthToken());
                             divrollUser.delete().subscribe(isDeleted -> {

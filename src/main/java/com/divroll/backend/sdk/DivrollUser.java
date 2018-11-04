@@ -36,6 +36,137 @@ public class DivrollUser extends DivrollBase
     private String dateCreated;
     private String dateUpdated;
 
+    public Single<DivrollUser> create(String email, String username, String password,
+                                      String linkName, DivrollEntity linkedEntity, String backlinkName) {
+        setUsername(username);
+        setPassword(password);
+
+        HttpRequestWithBody httpRequestWithBody = HttpClient.post(Divroll.getServerUrl() + usersUrl);
+        if(Divroll.getMasterKey() != null) {
+            httpRequestWithBody.header(HEADER_MASTER_KEY, Divroll.getMasterKey());
+        }
+        if(Divroll.getAppId() != null) {
+            httpRequestWithBody.header(HEADER_APP_ID, Divroll.getAppId());
+        }
+        if(Divroll.getApiKey() != null) {
+            httpRequestWithBody.header(HEADER_API_KEY, Divroll.getApiKey());
+        }
+        if(Divroll.getAuthToken() != null) {
+            httpRequestWithBody.header("X-Divroll-Auth-Key", Divroll.getAuthToken());
+        }
+
+        JSONObject body = new JSONObject();
+        JSONObject userObj = new JSONObject();
+
+        JSONArray aclRead = new JSONArray();
+        JSONArray aclWrite = new JSONArray();
+        if(acl != null) {
+            for(String uuid : acl.getAclRead()) {
+                JSONObject entityStub = new JSONObject();
+                entityStub.put("entityId", uuid);
+                aclRead.put(entityStub);
+            }
+            for(String uuid : acl.getAclWrite()) {
+                JSONObject entityStub = new JSONObject();
+                entityStub.put("entityId", uuid);
+                aclWrite.put(entityStub);
+            }
+        }
+
+        userObj.put("aclRead", aclRead);
+        userObj.put("aclWrite", aclWrite);
+        userObj.put("email", email);
+        userObj.put("username", username);
+        userObj.put("password", password);
+        userObj.put("publicRead", (acl != null && acl.getPublicRead() != null)
+                ? acl.getPublicRead() : JSONObject.NULL);
+        userObj.put("publicWrite", (acl != null && acl.getPublicWrite() != null)
+                ? acl.getPublicWrite() : JSONObject.NULL);
+
+        JSONArray roles = new JSONArray();
+        for(DivrollRole role : getRoles()) {
+            JSONObject roleObj = new JSONObject();
+            roleObj.put("entityId", role.getEntityId());
+            roles.put(roleObj);
+        }
+
+        userObj.put("roles", roles);
+        body.put("user", userObj);
+
+        httpRequestWithBody.header("X-Divroll-ACL-Read", aclRead.toString());
+        httpRequestWithBody.header("X-Divroll-ACL-Write", aclWrite.toString());
+        httpRequestWithBody.header("Content-Type", "application/json");
+
+        httpRequestWithBody.queryString("linkName", linkName);
+        httpRequestWithBody.queryString("backlinkName", backlinkName);
+        httpRequestWithBody.queryString("entityType", linkedEntity.getEntityType());
+        httpRequestWithBody.queryString("entity", linkedEntity.getProperties().toString());
+
+        Browser.getWindow().getConsole().log("CREATE BODY=" + body);
+        httpRequestWithBody.body(body);
+
+        return httpRequestWithBody.asJson().map(response -> {
+            if(response.getStatus() >= 500) {
+                throw new ServerErrorRequestException();
+            } else if(response.getStatus() == 401) {
+                throw new UnauthorizedRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() == 400) {
+                throw new BadRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() >= 400) {
+                throw new ClientErrorRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() == 201) {
+
+                JsonNode responseBody = response.getBody();
+                JSONObject bodyObj = responseBody.getObject();
+                JSONObject responseUser = bodyObj.getJSONObject("user");
+                String entityId = responseUser.getString("entityId");
+                String webToken = responseUser.getString("webToken");
+                setEntityId(entityId);
+                setAuthToken(webToken);
+
+                Boolean publicRead = responseUser.get("publicRead") != null ? responseUser.getBoolean("publicRead") : null;
+                Boolean publicWrite = responseUser.get("publicWrite") != null ? responseUser.getBoolean("publicWrite") : null;
+                List<String> aclWriteList = aclWriteFrom(responseUser);
+                List<String> aclReadList =  aclReadFrom(responseUser);
+
+                List<DivrollRole> divrollRoles = null;
+                try {
+                    Object rolesObj = responseUser.get("roles");
+                    if(rolesObj instanceof JSONArray) {
+                        divrollRoles = new LinkedList<DivrollRole>();
+                        JSONArray jsonArray = (JSONArray) rolesObj;
+                        for(int i=0;i<jsonArray.length();i++) {
+                            JSONObject jsonObject = jsonArray.getJSONObject(i);
+                            String roleId = jsonObject.getString("entityId");
+                            DivrollRole divrollRole = new DivrollRole();
+                            divrollRole.setEntityId(roleId);
+                            divrollRoles.add(divrollRole);
+                        }
+                    } else if(rolesObj instanceof JSONObject) {
+                        divrollRoles = new LinkedList<DivrollRole>();
+                        JSONObject jsonObject = (JSONObject) rolesObj;
+                        String roleId = jsonObject.getString("entityId");
+                        DivrollRole divrollRole = new DivrollRole();
+                        divrollRole.setEntityId(roleId);
+                        divrollRoles.add(divrollRole);
+                    }
+                } catch (Exception e) {
+                    // do nothing
+                }
+
+                DivrollACL acl = new DivrollACL(aclReadList, aclWriteList);
+                acl.setPublicWrite(publicWrite);
+                acl.setPublicRead(publicRead);
+                setAcl(acl);
+
+                setRoles(divrollRoles);
+
+                return copy();
+            }
+            return null;
+        });
+    }
+
     public Single<DivrollUser> create(String username, String password)  {
 
         setUsername(username);
