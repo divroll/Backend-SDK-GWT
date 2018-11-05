@@ -73,6 +73,9 @@ public class DivrollEntities extends DivrollBase
         if(Divroll.getAuthToken() != null) {
             httpRequestWithBody.header(HEADER_AUTH_TOKEN, Divroll.getAuthToken());
         }
+        if(Divroll.getNamespace() != null) {
+            httpRequestWithBody.header(HEADER_NAMESPACE, Divroll.getNamespace());
+        }
         return httpRequestWithBody.asJson().map(response -> {
             if(response.getStatus() >= 500) {
                 throw new HttpRequestException(response.getStatusText(), response.getStatus());
@@ -105,6 +108,9 @@ public class DivrollEntities extends DivrollBase
         }
         if(Divroll.getAuthToken() != null) {
             getRequest.header(HEADER_AUTH_TOKEN, Divroll.getAuthToken());
+        }
+        if(Divroll.getNamespace() != null) {
+            getRequest.header(HEADER_NAMESPACE, Divroll.getNamespace());
         }
 
         return getRequest.asJson().map(response -> {

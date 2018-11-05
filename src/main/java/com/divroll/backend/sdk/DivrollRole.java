@@ -46,7 +46,9 @@ public class DivrollRole extends DivrollBase
         if(Divroll.getApiKey() != null) {
             httpRequestWithBody.header(HEADER_API_KEY, Divroll.getApiKey());
         }
-
+        if(Divroll.getNamespace() != null) {
+            httpRequestWithBody.header(HEADER_NAMESPACE, Divroll.getNamespace());
+        }
         JSONObject roleObj = new JSONObject();
         roleObj.put("name", name);
         roleObj.put("publicRead", (acl != null && acl.getPublicRead() != null)
@@ -129,7 +131,15 @@ public class DivrollRole extends DivrollBase
         if(Divroll.getApiKey() != null) {
             httpRequestWithBody.header(HEADER_API_KEY, Divroll.getApiKey());
         }
-
+        if(Divroll.getNamespace() != null) {
+            httpRequestWithBody.header(HEADER_NAMESPACE, Divroll.getNamespace());
+        }
+        if(Divroll.getNamespace() != null) {
+            httpRequestWithBody.header(HEADER_NAMESPACE, Divroll.getNamespace());
+        }
+        if(Divroll.getNamespace() != null) {
+            httpRequestWithBody.header(HEADER_NAMESPACE, Divroll.getNamespace());
+        }
         JSONObject roleObj = new JSONObject();
 
         JSONArray aclRead = new JSONArray();

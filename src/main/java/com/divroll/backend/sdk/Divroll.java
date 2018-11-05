@@ -9,6 +9,7 @@ public class Divroll {
     private static String applicationKey;
     private static String applicationMasterKey;
     private static String authenticationToken;
+    private static String currentNamespace;
     private static DivrollUser currentUser = null;
 
     private Divroll() {}
@@ -59,6 +60,14 @@ public class Divroll {
 
     public static void setAuthToken(String authToken) {
         authenticationToken = authToken;
+    }
+
+    public static void setNamespace(String namespace) {
+        currentNamespace = namespace;
+    }
+
+    public static String getNamespace() {
+        return currentNamespace;
     }
 
     private static native String getDivrollServerUrlFromJs() /*-{

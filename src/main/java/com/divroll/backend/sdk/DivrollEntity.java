@@ -58,7 +58,9 @@ public class DivrollEntity extends DivrollBase
         if(Divroll.getAuthToken() != null) {
             getRequest.header(HEADER_AUTH_TOKEN, Divroll.getAuthToken());
         }
-
+        if(Divroll.getNamespace() != null) {
+            getRequest.header(HEADER_NAMESPACE, Divroll.getNamespace());
+        }
         return getRequest.asString().map(response -> {
             if(response.getStatus() >= 500) {
                 throw new ServerErrorRequestException();
@@ -103,6 +105,9 @@ public class DivrollEntity extends DivrollBase
         }
         if(Divroll.getAuthToken() != null) {
             httpRequestWithBody.header(HEADER_AUTH_TOKEN, Divroll.getAuthToken());
+        }
+        if(Divroll.getNamespace() != null) {
+            httpRequestWithBody.header(HEADER_NAMESPACE, Divroll.getNamespace());
         }
 
         JSONArray aclRead = new JSONArray();
@@ -166,7 +171,9 @@ public class DivrollEntity extends DivrollBase
         if(Divroll.getAuthToken() != null) {
             httpRequestWithBody.header(HEADER_AUTH_TOKEN, Divroll.getAuthToken());
         }
-
+        if(Divroll.getNamespace() != null) {
+            httpRequestWithBody.header(HEADER_NAMESPACE, Divroll.getNamespace());
+        }
         JSONArray aclRead = new JSONArray();
         JSONArray aclWrite = new JSONArray();
         if(acl != null) {
@@ -223,7 +230,9 @@ public class DivrollEntity extends DivrollBase
         if(Divroll.getAuthToken() != null) {
             getRequest.header(HEADER_AUTH_TOKEN, Divroll.getAuthToken());
         }
-
+        if(Divroll.getNamespace() != null) {
+            getRequest.header(HEADER_NAMESPACE, Divroll.getNamespace());
+        }
         return getRequest.asJson().map(response -> {
             if(response.getStatus() >= 500) {
                 throw new ServerErrorRequestException();
@@ -399,6 +408,9 @@ public class DivrollEntity extends DivrollBase
         if(Divroll.getAuthToken() != null) {
             getRequest.header(HEADER_AUTH_TOKEN, Divroll.getAuthToken());
         }
+        if(Divroll.getNamespace() != null) {
+            getRequest.header(HEADER_NAMESPACE, Divroll.getNamespace());
+        }
         return getRequest.asJson().map(response -> {
             if(response.getStatus() >= 500) {
                 throw new ServerErrorRequestException();
@@ -480,7 +492,9 @@ public class DivrollEntity extends DivrollBase
         if(Divroll.getAuthToken() != null) {
             getRequest.header(HEADER_AUTH_TOKEN, Divroll.getAuthToken());
         }
-
+        if(Divroll.getNamespace() != null) {
+            getRequest.header(HEADER_NAMESPACE, Divroll.getNamespace());
+        }
         return getRequest.asJson().map(response -> {
             if(response.getStatus() >= 500) {
                 throw new ServerErrorRequestException();
@@ -559,7 +573,12 @@ public class DivrollEntity extends DivrollBase
         if(Divroll.getAuthToken() != null) {
             httpRequestWithBody.header(HEADER_AUTH_TOKEN, Divroll.getAuthToken());
         }
-
+        if(Divroll.getNamespace() != null) {
+            httpRequestWithBody.header(HEADER_NAMESPACE, Divroll.getNamespace());
+        }
+        if(Divroll.getNamespace() != null) {
+            httpRequestWithBody.header(HEADER_NAMESPACE, Divroll.getNamespace());
+        }
         JSONArray aclRead = new JSONArray();
         JSONArray aclWrite = new JSONArray();
         if(acl != null) {
@@ -616,7 +635,9 @@ public class DivrollEntity extends DivrollBase
         if(Divroll.getAuthToken() != null) {
             httpRequestWithBody.header(HEADER_AUTH_TOKEN, Divroll.getAuthToken());
         }
-
+        if(Divroll.getNamespace() != null) {
+            httpRequestWithBody.header(HEADER_NAMESPACE, Divroll.getNamespace());
+        }
         JSONArray aclRead = new JSONArray();
         JSONArray aclWrite = new JSONArray();
         if(acl != null) {
@@ -672,6 +693,9 @@ public class DivrollEntity extends DivrollBase
         }
         if(Divroll.getAuthToken() != null) {
             httpRequestWithBody.header(HEADER_AUTH_TOKEN, Divroll.getAuthToken());
+        }
+        if(Divroll.getNamespace() != null) {
+            httpRequestWithBody.header(HEADER_NAMESPACE, Divroll.getNamespace());
         }
 
         JSONArray aclRead = new JSONArray();
@@ -746,7 +770,9 @@ public class DivrollEntity extends DivrollBase
         if(Divroll.getAuthToken() != null) {
             httpRequestWithBody.header(HEADER_AUTH_TOKEN, Divroll.getAuthToken());
         }
-
+        if(Divroll.getNamespace() != null) {
+            httpRequestWithBody.header(HEADER_NAMESPACE, Divroll.getNamespace());
+        }
         JSONArray aclRead = new JSONArray();
         JSONArray aclWrite = new JSONArray();
         if(acl != null) {
@@ -816,6 +842,12 @@ public class DivrollEntity extends DivrollBase
         if(Divroll.getAuthToken() != null) {
             httpRequestWithBody.header(HEADER_AUTH_TOKEN, Divroll.getAuthToken());
         }
+        if(Divroll.getNamespace() != null) {
+            httpRequestWithBody.header(HEADER_NAMESPACE, Divroll.getNamespace());
+        }
+        if(Divroll.getNamespace() != null) {
+            httpRequestWithBody.header(HEADER_NAMESPACE, Divroll.getNamespace());
+        }
         JSONArray aclRead = new JSONArray();
         JSONArray aclWrite = new JSONArray();
         if(acl != null) {
@@ -879,7 +911,9 @@ public class DivrollEntity extends DivrollBase
         if(Divroll.getAuthToken() != null) {
             getRequest.header(HEADER_AUTH_TOKEN, Divroll.getAuthToken());
         }
-
+        if(Divroll.getNamespace() != null) {
+            getRequest.header(HEADER_NAMESPACE, Divroll.getNamespace());
+        }
         return getRequest.asJson().map(response -> {
             if(response.getStatus() >= 500) {
                 throw new HttpRequestException(response.getStatusText(), response.getStatus());
@@ -962,6 +996,12 @@ public class DivrollEntity extends DivrollBase
         if(Divroll.getAuthToken() != null) {
             httpRequestWithBody.header(HEADER_AUTH_TOKEN, Divroll.getAuthToken());
         }
+        if(Divroll.getNamespace() != null) {
+            httpRequestWithBody.header(HEADER_NAMESPACE, Divroll.getNamespace());
+        }
+        if(Divroll.getNamespace() != null) {
+            httpRequestWithBody.header(HEADER_NAMESPACE, Divroll.getNamespace());
+        }
         return httpRequestWithBody.asJson().map(response -> {
             if(response.getStatus() >= 500) {
                 throw new ServerErrorRequestException();
@@ -992,6 +1032,9 @@ public class DivrollEntity extends DivrollBase
         }
         if(Divroll.getAuthToken() != null) {
             httpRequestWithBody.header(HEADER_AUTH_TOKEN, Divroll.getAuthToken());
+        }
+        if(Divroll.getNamespace() != null) {
+            httpRequestWithBody.header(HEADER_NAMESPACE, Divroll.getNamespace());
         }
         return httpRequestWithBody.asJson().map(response -> {
             if(response.getStatus() >= 500) {
