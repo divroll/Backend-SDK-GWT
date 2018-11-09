@@ -1,5 +1,6 @@
 package com.divroll.backend.sdk;
 
+import com.divroll.http.client.HttpRequestWithBody;
 import com.google.gwt.http.client.RequestException;
 import io.reactivex.Single;
 import com.divroll.http.client.GetRequest;
@@ -13,15 +14,25 @@ public class TestData {
 
     public static Single<TestApplication> getNewApplication() throws RequestException {
         DataFactory df = new DataFactory();
-        GetRequest getRequest = (GetRequest) HttpClient.get(
+        HttpRequestWithBody httpRequest = (HttpRequestWithBody) HttpClient.post(
                 Divroll.getServerUrl() + "/applications/" + df.getName());
         if(Divroll.getAppId() != null) {
-            getRequest.header(DivrollBase.HEADER_APP_ID, Divroll.getAppId());
+            httpRequest.header(DivrollBase.HEADER_APP_ID, Divroll.getAppId());
         }
         if(Divroll.getApiKey() != null) {
-            getRequest.header(DivrollBase.HEADER_API_KEY, Divroll.getApiKey());
+            httpRequest.header(DivrollBase.HEADER_API_KEY, Divroll.getApiKey());
         }
-        return getRequest.asJson().map(response -> {
+
+        JSONObject userObject = new JSONObject();
+        userObject.put("username", df.getEmailAddress());
+        userObject.put("password", "password");
+        userObject.put("role", "role");
+        JSONObject payload = new JSONObject();
+        JSONObject applicationObj = new JSONObject();
+        payload.put("application", applicationObj);
+        httpRequest.body(payload.toString());
+
+        return httpRequest.asJson().map(response -> {
             if(response.getStatus() == 404) {
                 throw new NotFoundRequestException(response.getStatusText(), response.getStatus());
             } else if(response.getStatus() == 401) {
