@@ -1,5 +1,6 @@
 package com.divroll.backend.sdk;
 
+import com.divroll.backend.sdk.filter.QueryFilter;
 import com.divroll.backend.sdk.helper.JSON;
 import com.divroll.http.client.*;
 import com.google.gwt.http.client.RequestException;
@@ -92,7 +93,7 @@ public class DivrollEntities extends DivrollBase
         });
     }
 
-    public Single<DivrollEntities> query()  {
+    public Single<DivrollEntities> query(QueryFilter filter)  {
         String completeUrl = Divroll.getServerUrl()
                 + entityStoreUrl + entityStore;;
         GetRequest getRequest = (GetRequest) HttpClient.get(completeUrl);
@@ -111,6 +112,10 @@ public class DivrollEntities extends DivrollBase
         }
         if(Divroll.getNamespace() != null) {
             getRequest.header(HEADER_NAMESPACE, Divroll.getNamespace());
+        }
+
+        if(filter != null) {
+            getRequest.queryString("queries", filter.toString());
         }
 
         return getRequest.asJson().map(response -> {
@@ -174,6 +179,11 @@ public class DivrollEntities extends DivrollBase
             }
             return copy();
         });
+    }
+
+
+    public Single<DivrollEntities> query()  {
+        return query(null);
     }
 
     @Override
