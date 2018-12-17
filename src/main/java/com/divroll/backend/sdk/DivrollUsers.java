@@ -10,6 +10,7 @@ import com.divroll.http.client.exceptions.UnauthorizedRequestException;
 import com.google.gwt.http.client.RequestException;
 import elemental.client.Browser;
 import io.reactivex.Single;
+import org.apache.xpath.operations.Bool;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -25,8 +26,10 @@ public class DivrollUsers extends DivrollBase
     private static final String usersUrl = "/entities/users";
 
     private List<DivrollUser> users;
-    private int skip = 0;
-    private int limit = 100;
+    private Integer skip = 0;
+    private Integer limit = 100;
+    private Boolean count;
+    private Long result;
 
     public List<DivrollUser> getUsers() {
         if(users == null) {
@@ -39,19 +42,19 @@ public class DivrollUsers extends DivrollBase
         this.users = users;
     }
 
-    public int getSkip() {
+    public Integer getSkip() {
         return skip;
     }
 
-    public void setSkip(int skip) {
+    public void setSkip(Integer skip) {
         this.skip = skip;
     }
 
-    public int getLimit() {
+    public Integer getLimit() {
         return limit;
     }
 
-    public void setLimit(int limit) {
+    public void setLimit(Integer limit) {
         this.limit = limit;
     }
 
@@ -75,6 +78,18 @@ public class DivrollUsers extends DivrollBase
         if(Divroll.getNamespace() != null) {
             getRequest.header(HEADER_NAMESPACE, Divroll.getNamespace());
         }
+
+        if(skip != null) {
+            getRequest.queryString("skip", String.valueOf(getLimit()));
+        }
+        if(limit != null) {
+            getRequest.queryString("limit", String.valueOf(getSkip()));
+        }
+
+        if(count != null) {
+            getRequest.queryString("count", String.valueOf(getCount()));
+        }
+
         return getRequest.asJson().map(response -> {
             if(response.getStatus() >= 500) {
                 throw new ServerErrorRequestException();
@@ -93,6 +108,7 @@ public class DivrollUsers extends DivrollBase
                 JSONArray results = users.getJSONArray("results");
                 int skip = users.getNumber("skip").intValue();
                 int limit = users.getNumber("limit").intValue();
+                result = users.getLong("count");
 
                 if(results == null) {
                     JSONObject singleResultObject = users.getJSONObject("results");
@@ -196,5 +212,17 @@ public class DivrollUsers extends DivrollBase
         s[0] = s[0] + "limit=" + limit + "\n";
         s[0] = s[0] + "]" + "\n";
         return s[0];
+    }
+
+    public Boolean getCount() {
+        return count;
+    }
+
+    public void setCount(Boolean count) {
+        this.count = count;
+    }
+
+    public Long getResult() {
+        return result;
     }
 }

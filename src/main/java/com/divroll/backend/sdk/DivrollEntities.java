@@ -21,8 +21,10 @@ public class DivrollEntities extends DivrollBase
     private static final String entityStoreUrl = "/entities/";
 
     private List<DivrollEntity> entities;
-    private int skip;
-    private int limit;
+    private Integer skip;
+    private Integer limit;
+    private Boolean count;
+    private Long result;
     private String entityStore;
 
     private DivrollEntities() {}
@@ -42,19 +44,19 @@ public class DivrollEntities extends DivrollBase
         this.entities = entities;
     }
 
-    public int getSkip() {
+    public Integer getSkip() {
         return skip;
     }
 
-    public void setSkip(int skip) {
+    public void setSkip(Integer skip) {
         this.skip = skip;
     }
 
-    public int getLimit() {
+    public Integer getLimit() {
         return limit;
     }
 
-    public void setLimit(int limit) {
+    public void setLimit(Integer limit) {
         this.limit = limit;
     }
 
@@ -118,6 +120,17 @@ public class DivrollEntities extends DivrollBase
             getRequest.queryString("queries", filter.toString());
         }
 
+        if(skip != null) {
+            getRequest.queryString("skip", String.valueOf(getSkip()));
+        }
+        if(limit != null) {
+            getRequest.queryString("limit", String.valueOf(getLimit()));
+        }
+
+        if(count != null) {
+            getRequest.queryString("count", String.valueOf(getCount()));
+        }
+
         return getRequest.asJson().map(response -> {
             if(response.getStatus() >= 500) {
                 throw new HttpRequestException(response.getStatusText(), response.getStatus());
@@ -135,6 +148,7 @@ public class DivrollEntities extends DivrollBase
                 JSONObject bodyObj = body.getObject();
                 JSONObject entitiesJSONObject = bodyObj.getJSONObject("entities");
                 JSONArray results = entitiesJSONObject.getJSONArray("results");
+                result = entitiesJSONObject.getLong("count");
                 for(int i=0;i<results.length();i++){
                     DivrollEntity divrollEntity = new DivrollEntity(this.entityStore);
                     JSONObject entityJSONObject = results.getJSONObject(i);
@@ -190,4 +204,17 @@ public class DivrollEntities extends DivrollBase
     public DivrollEntities copy() {
         return this;
     }
+
+    public Boolean getCount() {
+        return count;
+    }
+
+    public void setCount(Boolean count) {
+        this.count = count;
+    }
+
+    public Long getResult() {
+        return result;
+    }
+
 }

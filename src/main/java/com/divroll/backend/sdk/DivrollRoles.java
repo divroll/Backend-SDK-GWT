@@ -25,8 +25,8 @@ public class DivrollRoles extends DivrollBase
     private static final String rolesUrl = "/entities/roles";
 
     private List<DivrollRole> roles;
-    private int skip;
-    private int limit;
+    private Integer skip;
+    private Integer limit;
 
     public List<DivrollRole> getRoles() {
         if(roles == null) {
@@ -39,19 +39,19 @@ public class DivrollRoles extends DivrollBase
         this.roles = roles;
     }
 
-    public int getSkip() {
+    public Integer getSkip() {
         return skip;
     }
 
-    public void setSkip(int skip) {
+    public void setSkip(Integer skip) {
         this.skip = skip;
     }
 
-    public int getLimit() {
+    public Integer getLimit() {
         return limit;
     }
 
-    public void setLimit(int limit) {
+    public void setLimit(Integer limit) {
         this.limit = limit;
     }
 
@@ -74,6 +74,14 @@ public class DivrollRoles extends DivrollBase
         if(Divroll.getNamespace() != null) {
             getRequest.header(HEADER_NAMESPACE, Divroll.getNamespace());
         }
+
+        if(skip != null) {
+            getRequest.queryString("skip", String.valueOf(getSkip()));
+        }
+        if(limit != null) {
+            getRequest.queryString("limit", String.valueOf(getLimit()));
+        }
+
         return getRequest.asJson().map(response -> {
             if(response.getStatus() >= 500) {
                 throw new ServerErrorRequestException(response.getStatusText(), response.getStatus());

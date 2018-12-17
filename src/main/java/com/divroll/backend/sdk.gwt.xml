@@ -8,6 +8,8 @@
   <!-- Other module inherits                                      -->
   <!--<inherits name="io.reactivex.RxJava"/>-->
   <inherits name="com.divroll.http.HttpClient" />
+  <inherits name="elemental2.dom.Dom"/>
+  <inherits name="elemental2.dom.Dom"/>
 
   <!-- Specify the app entry point class.                         -->
   <entry-point class='com.divroll.backend.sdk.SDKEntryPoint' />
