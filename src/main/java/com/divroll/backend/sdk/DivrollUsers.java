@@ -30,6 +30,7 @@ public class DivrollUsers extends DivrollBase
     private Integer limit = 100;
     private Boolean count;
     private Long result;
+    private List<String> roles;
 
     public List<DivrollUser> getUsers() {
         if(users == null) {
@@ -80,14 +81,25 @@ public class DivrollUsers extends DivrollBase
         }
 
         if(skip != null) {
-            getRequest.queryString("skip", String.valueOf(getLimit()));
+            getRequest.queryString("skip", String.valueOf(getSkip()));
         }
         if(limit != null) {
-            getRequest.queryString("limit", String.valueOf(getSkip()));
+            getRequest.queryString("limit", String.valueOf(getLimit()));
         }
 
         if(count != null) {
             getRequest.queryString("count", String.valueOf(getCount()));
+        }
+
+        final JSONArray rolesArray = new JSONArray();
+        if(roles != null && !roles.isEmpty()) {
+            roles.forEach(role -> {
+                rolesArray.put(role);
+            });
+        }
+
+        if(rolesArray.length() > 0) {
+            getRequest.queryString("roles", rolesArray.toString());
         }
 
         return getRequest.asJson().map(response -> {
@@ -224,5 +236,9 @@ public class DivrollUsers extends DivrollBase
 
     public Long getResult() {
         return result;
+    }
+
+    public void setRoles(List<String> roles) {
+        this.roles = roles;
     }
 }
