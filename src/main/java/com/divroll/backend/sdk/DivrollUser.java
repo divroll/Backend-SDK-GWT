@@ -8,12 +8,11 @@ import io.reactivex.SingleOnSubscribe;
 import io.reactivex.functions.Consumer;
 import com.divroll.http.client.*;
 import com.divroll.http.client.exceptions.*;
+import org.apache.xpath.operations.Bool;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 import static com.divroll.backend.sdk.helper.ACLHelper.aclReadFrom;
 import static com.divroll.backend.sdk.helper.ACLHelper.aclWriteFrom;
@@ -35,6 +34,8 @@ public class DivrollUser extends DivrollBase
 
     private String dateCreated;
     private String dateUpdated;
+
+    private Map<String,List<DivrollEntity>> linksMap;
 
     public Single<DivrollUser> create(String email, String username, String password,
                                       String linkName, DivrollEntity linkedEntity, String backlinkName) {
@@ -424,6 +425,207 @@ public class DivrollUser extends DivrollBase
         });
 
 
+    }
+
+    public Single<DivrollUser> retrieve(List<String> linkNames) {
+        return Single.create(new SingleOnSubscribe<DivrollUser>() {
+            @Override
+            public void subscribe(SingleEmitter<DivrollUser> emitter) throws Exception {
+                GetRequest getRequest = (GetRequest) HttpClient.get(Divroll.getServerUrl()
+                        + usersUrl + "/" + getEntityId());
+
+                if(Divroll.getMasterKey() != null) {
+                    getRequest.header(HEADER_MASTER_KEY, Divroll.getMasterKey());
+                }
+                if(Divroll.getAppId() != null) {
+                    getRequest.header(HEADER_APP_ID, Divroll.getAppId());
+                }
+                if(Divroll.getApiKey() != null) {
+                    getRequest.header(HEADER_API_KEY, Divroll.getApiKey());
+                }
+                if(Divroll.getAuthToken() != null) {
+                    getRequest.header(HEADER_AUTH_TOKEN, Divroll.getAuthToken());
+                }
+                if(Divroll.getNamespace() != null) {
+                    getRequest.header(HEADER_NAMESPACE, Divroll.getNamespace());
+                }
+                Single<HttpResponse<JsonNode>> responseSingle = getRequest.asJson();
+
+                JSONArray linkNameArray = new JSONArray();
+                for(String linkName : linkNames) {
+                    linkNameArray.put(linkName);
+                }
+                getRequest.queryString("include", linkNameArray.toString());
+
+                responseSingle.subscribe(new Consumer<HttpResponse<JsonNode>>() {
+                    @Override
+                    public void accept(HttpResponse<JsonNode> response) throws Exception {
+                        if(response.getStatus() >= 500) {
+                            emitter.onError(new ServerErrorRequestException());
+                        } else if(response.getStatus() == 401) {
+                            emitter.onError(new UnauthorizedRequestException(response.getStatusText(), response.getStatus()));
+                        } else if(response.getStatus() == 400) {
+                            emitter.onError(new BadRequestException(response.getStatusText(), response.getStatus()));
+                        }  else if(response.getStatus() >= 400) {
+                            emitter.onError(new ClientErrorRequestException(response.getStatusText(), response.getStatus()));
+                        } else if(response.getStatus() == 200) {
+                            JsonNode body = response.getBody();
+                            JSONObject bodyObj = body.getObject();
+                            JSONObject userJsonObj = bodyObj.getJSONObject("user");
+                            String entityId = userJsonObj.getString("entityId");
+                            String username = userJsonObj.getString("username");
+                            String email = userJsonObj.getString("email");
+
+                            Boolean publicRead = userJsonObj.get("publicRead") != null ? userJsonObj.getBoolean("publicRead") : null;
+                            Boolean publicWrite = userJsonObj.get("publicWrite") != null ? userJsonObj.getBoolean("publicWrite") : null;
+                            List<String> aclWriteList = aclWriteFrom(userJsonObj);
+                            List<String> aclReadList =  aclReadFrom(userJsonObj);
+                            List<DivrollRole> divrollRoles = rolesFrom(userJsonObj);
+
+                            DivrollACL acl = new DivrollACL(aclReadList, aclWriteList);
+                            acl.setPublicWrite(publicWrite);
+                            acl.setPublicRead(publicRead);
+
+                            setEntityId(entityId);
+                            setUsername(username);
+                            setEmail(email);
+                            setAcl(acl);
+                            setRoles(divrollRoles);
+
+                            String dateCreated = userJsonObj.getString("dateCreated");
+                            String dateUpdated = userJsonObj.getString("dateUpdated");
+                            setDateCreated(dateCreated);
+                            setDateUpdated(dateUpdated);
+
+                            JSONArray links = userJsonObj.getJSONArray("links");
+                            for(int i=0;i<links.length();i++) {
+                                JSONObject jsonObject = links.getJSONObject(i);
+                                String linkName = jsonObject.getString("linkName");
+                                List<DivrollEntity> entityList = null;
+                                try {
+                                    JSONArray entities = jsonObject.getJSONArray("entities");
+                                    entityList = new LinkedList<>();
+
+                                    for(int k=0;k<entities.length();k++) {
+                                        JSONObject entity = entities.getJSONObject(k);
+                                        String created = entity.getString("dateCreated");
+                                        String updated = entity.getString("dateUpdated");
+                                        String eId = entity.getString("entityId");
+                                        Boolean readPublic = entity.getBoolean("publicRead");
+                                        Boolean writePublic = entity.getBoolean("publicWrite");
+                                        JSONArray properties = entity.getJSONArray("properties");
+
+                                        String entityType = entity.getString("entityType");
+
+                                        DivrollEntity divrollEntity = new DivrollEntity(entityType);
+
+                                        divrollEntity.setDateCreated(created);
+                                        divrollEntity.setDateUpdated(updated);
+                                        divrollEntity.setEntityId(eId);
+
+                                        DivrollACL divrollACL = new DivrollACL();
+                                        divrollACL.setPublicWrite(writePublic);
+                                        divrollACL.setPublicRead(readPublic);
+
+                                        divrollEntity.setAcl(divrollACL);
+
+                                        for(int j=0;j<properties.length();j++) {
+                                            JSONObject jsonProperty = properties.getJSONObject(i);
+                                            try {
+                                                JSONArray stringArray = jsonProperty.getJSONArray("string");
+                                                String key = stringArray.getString(0);
+                                                String value = stringArray.getString(1);
+                                                divrollEntity.setProperty(key, value);
+                                            } catch (Exception e) {
+                                                String key = jsonProperty.getString("string");
+                                                try {
+                                                    Boolean value = jsonProperty.getBoolean("boolean");
+                                                    divrollEntity.setProperty(key, value);
+                                                } catch (Exception ex) {
+                                                    Browser.getWindow().getConsole().error(ex.getMessage());
+                                                }
+                                                try {
+                                                    Double value = jsonProperty.getDouble("number");
+                                                    divrollEntity.setProperty(key, value);
+                                                } catch (Exception ex) {
+                                                    Browser.getWindow().getConsole().error(ex.getMessage());
+                                                }
+                                            }
+                                        }
+
+                                        entityList.add(divrollEntity);
+                                        linksMap.put(linkName, entityList);
+                                    }
+
+
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                                if(entityList == null) {
+                                    JSONObject entity = jsonObject.getJSONObject("entities");
+                                    entityList = new LinkedList<>();
+
+                                    String created = entity.getString("dateCreated");
+                                    String updated = entity.getString("dateUpdated");
+                                    String eId = entity.getString("entityId");
+                                    Boolean readPublic = entity.getBoolean("publicRead");
+                                    Boolean writePublic = entity.getBoolean("publicWrite");
+                                    JSONArray properties = entity.getJSONArray("properties");
+
+                                    String entityType = entity.getString("entityType");
+
+                                    DivrollEntity divrollEntity = new DivrollEntity(entityType);
+
+                                    divrollEntity.setDateCreated(created);
+                                    divrollEntity.setDateUpdated(updated);
+                                    divrollEntity.setEntityId(eId);
+
+                                    DivrollACL divrollACL = new DivrollACL();
+                                    divrollACL.setPublicWrite(writePublic);
+                                    divrollACL.setPublicRead(readPublic);
+
+                                    divrollEntity.setAcl(divrollACL);
+
+                                    for(int j=0;j<properties.length();j++) {
+                                        JSONObject jsonProperty = properties.getJSONObject(i);
+                                        try {
+                                            JSONArray stringArray = jsonProperty.getJSONArray("string");
+                                            String key = stringArray.getString(0);
+                                            String value = stringArray.getString(1);
+                                            divrollEntity.setProperty(key, value);
+                                        } catch (Exception e) {
+                                            String key = jsonProperty.getString("string");
+                                            try {
+                                                Boolean value = jsonProperty.getBoolean("boolean");
+                                                divrollEntity.setProperty(key, value);
+                                            } catch (Exception ex) {
+                                                Browser.getWindow().getConsole().error(ex.getMessage());
+                                            }
+                                            try {
+                                                Double value = jsonProperty.getDouble("number");
+                                                divrollEntity.setProperty(key, value);
+                                            } catch (Exception ex) {
+                                                Browser.getWindow().getConsole().error(ex.getMessage());
+                                            }
+                                        }
+                                    }
+
+                                    entityList.add(divrollEntity);
+                                    linksMap.put(linkName, entityList);
+
+                                }
+                            }
+
+                            emitter.onSuccess(copy());
+
+                        }
+                    }
+                });
+
+
+
+            }
+        });
     }
 
     public Single<DivrollUser> retrieve()   {
@@ -945,5 +1147,260 @@ public class DivrollUser extends DivrollBase
 
     public void setDateUpdated(String dateUpdated) {
         this.dateUpdated = dateUpdated;
+    }
+
+    public Map<String, List<DivrollEntity>> getLinksMap() {
+        if(linksMap == null) {
+            linksMap = new LinkedHashMap<>();
+        }
+        return linksMap;
+    }
+
+    public void setLinksMap(Map<String, List<DivrollEntity>> linksMap) {
+        this.linksMap = linksMap;
+    }
+
+    public Single<Boolean> setLink(String linkName, String entityId) {
+        if(entityId == null) {
+            throw new IllegalArgumentException("Save the entity first before creating a link");
+        }
+        HttpRequestWithBody httpRequestWithBody = HttpClient.post(Divroll.getServerUrl()
+                + usersUrl + "/" + getEntityId() + "/links/" + linkName + "/" + entityId);
+        httpRequestWithBody.queryString("linkType", "set");
+        if(Divroll.getMasterKey() != null) {
+            httpRequestWithBody.header(HEADER_MASTER_KEY, Divroll.getMasterKey());
+        }
+        if(Divroll.getAppId() != null) {
+            httpRequestWithBody.header(HEADER_APP_ID, Divroll.getAppId());
+        }
+        if(Divroll.getApiKey() != null) {
+            httpRequestWithBody.header(HEADER_API_KEY, Divroll.getApiKey());
+        }
+        if(Divroll.getAuthToken() != null) {
+            httpRequestWithBody.header(HEADER_AUTH_TOKEN, Divroll.getAuthToken());
+        }
+        if(Divroll.getNamespace() != null) {
+            httpRequestWithBody.header(HEADER_NAMESPACE, Divroll.getNamespace());
+        }
+        if(Divroll.getNamespace() != null) {
+            httpRequestWithBody.header(HEADER_NAMESPACE, Divroll.getNamespace());
+        }
+        JSONArray aclRead = new JSONArray();
+        JSONArray aclWrite = new JSONArray();
+        if(acl != null) {
+            for(String uuid : this.acl.getAclRead()) {
+                JSONObject entityStub = new JSONObject();
+                entityStub.put("entityId", uuid);
+                aclRead.put(entityStub);
+            }
+            for(String uuid : this.acl.getAclWrite()) {
+                JSONObject entityStub = new JSONObject();
+                entityStub.put("entityId", uuid);
+                aclWrite.put(entityStub);
+            }
+        }
+
+        httpRequestWithBody.header("X-Divroll-ACL-Read", aclRead.toString());
+        httpRequestWithBody.header("X-Divroll-ACL-Write", aclWrite.toString());
+        httpRequestWithBody.header("Content-Type", "application/json");
+
+        return httpRequestWithBody.asJson().map(response -> {
+            if(response.getStatus() >= 500) {
+                throw new ServerErrorRequestException();
+            } else if(response.getStatus() == 404) {
+                throw new NotFoundRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() == 401) {
+                throw new UnauthorizedRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() == 400) {
+                throw new BadRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() >= 400) {
+                throw new ClientErrorRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() == 201) {
+                return true;
+            }
+            return false;
+        });
+    }
+
+    public Single<Boolean> addLink(String linkName, String entityId)   {
+        if(entityId == null) {
+            throw new IllegalArgumentException("Save the entity first before creating a link");
+        }
+        HttpRequestWithBody httpRequestWithBody = HttpClient.post(Divroll.getServerUrl()
+                + usersUrl + "/" + getEntityId() + "/links/" + linkName + "/" + entityId);
+        if(Divroll.getMasterKey() != null) {
+            httpRequestWithBody.header(HEADER_MASTER_KEY, Divroll.getMasterKey());
+        }
+        if(Divroll.getAppId() != null) {
+            httpRequestWithBody.header(HEADER_APP_ID, Divroll.getAppId());
+        }
+        if(Divroll.getApiKey() != null) {
+            httpRequestWithBody.header(HEADER_API_KEY, Divroll.getApiKey());
+        }
+        if(Divroll.getAuthToken() != null) {
+            httpRequestWithBody.header(HEADER_AUTH_TOKEN, Divroll.getAuthToken());
+        }
+        if(Divroll.getNamespace() != null) {
+            httpRequestWithBody.header(HEADER_NAMESPACE, Divroll.getNamespace());
+        }
+        if(Divroll.getNamespace() != null) {
+            httpRequestWithBody.header(HEADER_NAMESPACE, Divroll.getNamespace());
+        }
+        JSONArray aclRead = new JSONArray();
+        JSONArray aclWrite = new JSONArray();
+        if(acl != null) {
+            for(String uuid : this.acl.getAclRead()) {
+                JSONObject entityStub = new JSONObject();
+                entityStub.put("entityId", uuid);
+                aclRead.put(entityStub);
+            }
+            for(String uuid : this.acl.getAclWrite()) {
+                JSONObject entityStub = new JSONObject();
+                entityStub.put("entityId", uuid);
+                aclWrite.put(entityStub);
+            }
+        }
+
+        httpRequestWithBody.header("X-Divroll-ACL-Read", aclRead.toString());
+        httpRequestWithBody.header("X-Divroll-ACL-Write", aclWrite.toString());
+        httpRequestWithBody.header("Content-Type", "application/json");
+
+        return httpRequestWithBody.asJson().map(response -> {
+            if(response.getStatus() >= 500) {
+                throw new ServerErrorRequestException();
+            } else if(response.getStatus() == 404) {
+                throw new NotFoundRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() == 401) {
+                throw new UnauthorizedRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() == 400) {
+                throw new BadRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() >= 400) {
+                throw new ClientErrorRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() == 201) {
+                return true;
+            }
+            return false;
+        });
+
+    }
+
+    public Single<Boolean> removeLink(String linkName, String entityId)   {
+        if(entityId == null) {
+            throw new IllegalArgumentException("Save the entity first before removing a link");
+        }
+        HttpRequestWithBody httpRequestWithBody = HttpClient.delete(Divroll.getServerUrl()
+                + usersUrl + "/" + getEntityId() + "/links/" + linkName + "/" + entityId);
+        if(Divroll.getMasterKey() != null) {
+            httpRequestWithBody.header(HEADER_MASTER_KEY, Divroll.getMasterKey());
+        }
+        if(Divroll.getAppId() != null) {
+            httpRequestWithBody.header(HEADER_APP_ID, Divroll.getAppId());
+        }
+        if(Divroll.getApiKey() != null) {
+            httpRequestWithBody.header(HEADER_API_KEY, Divroll.getApiKey());
+        }
+        if(Divroll.getAuthToken() != null) {
+            httpRequestWithBody.header(HEADER_AUTH_TOKEN, Divroll.getAuthToken());
+        }
+        if(Divroll.getNamespace() != null) {
+            httpRequestWithBody.header(HEADER_NAMESPACE, Divroll.getNamespace());
+        }
+        JSONArray aclRead = new JSONArray();
+        JSONArray aclWrite = new JSONArray();
+        if(acl != null) {
+            for(String uuid : this.acl.getAclRead()) {
+                JSONObject entityStub = new JSONObject();
+                entityStub.put("entityId", uuid);
+                aclRead.put(entityStub);
+            }
+            for(String uuid : this.acl.getAclWrite()) {
+                JSONObject entityStub = new JSONObject();
+                entityStub.put("entityId", uuid);
+                aclWrite.put(entityStub);
+            }
+        }
+
+        httpRequestWithBody.header("X-Divroll-ACL-Read", aclRead.toString());
+        httpRequestWithBody.header("X-Divroll-ACL-Write", aclWrite.toString());
+        httpRequestWithBody.header("Content-Type", "application/json");
+
+        return httpRequestWithBody.asJson().map(response -> {
+            if(response.getStatus() >= 500) {
+                throw new ServerErrorRequestException(response.getStatusText(),response.getStatus());
+            } else if(response.getStatus() == 404) {
+                throw new NotFoundRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() == 401) {
+                throw new UnauthorizedRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() == 400) {
+                throw new BadRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() >= 400) {
+                throw new ClientErrorRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() == 200) {
+                return true;
+            }
+            return false;
+        });
+
+    }
+
+    public Single<Boolean> removeLinks(String linkName)   {
+        if(entityId == null) {
+            throw new IllegalArgumentException("Save the entity first before removing links");
+        }
+        HttpRequestWithBody httpRequestWithBody = HttpClient.delete(Divroll.getServerUrl()
+                + usersUrl + "/" + getEntityId() + "/links/" + linkName);
+        if(Divroll.getMasterKey() != null) {
+            httpRequestWithBody.header(HEADER_MASTER_KEY, Divroll.getMasterKey());
+        }
+        if(Divroll.getAppId() != null) {
+            httpRequestWithBody.header(HEADER_APP_ID, Divroll.getAppId());
+        }
+        if(Divroll.getApiKey() != null) {
+            httpRequestWithBody.header(HEADER_API_KEY, Divroll.getApiKey());
+        }
+        if(Divroll.getAuthToken() != null) {
+            httpRequestWithBody.header(HEADER_AUTH_TOKEN, Divroll.getAuthToken());
+        }
+        if(Divroll.getNamespace() != null) {
+            httpRequestWithBody.header(HEADER_NAMESPACE, Divroll.getNamespace());
+        }
+
+        JSONArray aclRead = new JSONArray();
+        JSONArray aclWrite = new JSONArray();
+        if(acl != null) {
+            for(String uuid : this.acl.getAclRead()) {
+                JSONObject entityStub = new JSONObject();
+                entityStub.put("entityId", uuid);
+                aclRead.put(entityStub);
+            }
+            for(String uuid : this.acl.getAclWrite()) {
+                JSONObject entityStub = new JSONObject();
+                entityStub.put("entityId", uuid);
+                aclWrite.put(entityStub);
+            }
+        }
+
+        httpRequestWithBody.header("X-Divroll-ACL-Read", aclRead.toString());
+        httpRequestWithBody.header("X-Divroll-ACL-Write", aclWrite.toString());
+        httpRequestWithBody.header("Content-Type", "application/json");
+
+        return httpRequestWithBody.asJson().map(response -> {
+            if(response.getStatus() >= 500) {
+                throw new ServerErrorRequestException();
+            } else if(response.getStatus() == 404){
+                throw new NotFoundRequestException(response.getStatusText(),response.getStatus());
+            } else if(response.getStatus() == 401) {
+                throw new UnauthorizedRequestException(response.getStatusText(),response.getStatus());
+            } else if(response.getStatus() == 400) {
+                throw new BadRequestException(response.getStatusText(),response.getStatus());
+            } else if(response.getStatus() >= 400) {
+                throw new ClientErrorRequestException(response.getStatusText(),response.getStatus());
+            } else if(response.getStatus() == 200) {
+                return true;
+            }
+            return false;
+        });
+
+
     }
 }
