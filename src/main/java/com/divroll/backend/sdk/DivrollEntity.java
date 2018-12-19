@@ -28,9 +28,17 @@ public class DivrollEntity extends DivrollBase
     private String dateCreated;
     private String dateUpdated;
 
+    private String linkName;
+    private String linkFrom;
+
     private JSONObject entityObj = new JSONObject();
 
     private String entityType;
+
+    public void setBacklink(String linkName, String linkFrom) {
+        this.linkFrom = linkFrom;
+        this.linkName = linkName;
+    }
 
     private DivrollEntity() {}
 
@@ -863,6 +871,11 @@ public class DivrollEntity extends DivrollBase
         httpRequestWithBody.header("X-Divroll-ACL-Read", aclRead.toString());
         httpRequestWithBody.header("X-Divroll-ACL-Write", aclWrite.toString());
         httpRequestWithBody.header("Content-Type", "application/json");
+
+        if(linkFrom != null && linkName != null) {
+            httpRequestWithBody.queryString("linkName", linkName);
+            httpRequestWithBody.queryString("linkFrom", linkFrom);
+        }
 
         return httpRequestWithBody.body(body).asJson().map(response -> {
             if(response.getStatus() >= 500) {

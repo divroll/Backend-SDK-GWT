@@ -32,9 +32,14 @@ public class DivrollUsers extends DivrollBase
     private Long result;
     private List<String> roles;
     private List<String> include;
+    private String authToken;
+
+    public DivrollUser getFirstUser() {
+        return getUsers().iterator().next();
+    }
 
     public List<DivrollUser> getUsers() {
-        if(users == null) {
+        if (users == null) {
             users = new LinkedList<DivrollUser>();
         }
         return users;
@@ -60,67 +65,71 @@ public class DivrollUsers extends DivrollBase
         this.limit = limit;
     }
 
-    public Single<DivrollUsers> query()  {
+    public Single<DivrollUsers> query() {
         String completeUrl = Divroll.getServerUrl() + usersUrl;
 
         GetRequest getRequest = (GetRequest) HttpClient.get(completeUrl);
 
-        if(Divroll.getMasterKey() != null) {
+        if (Divroll.getMasterKey() != null) {
             getRequest.header(HEADER_MASTER_KEY, Divroll.getMasterKey());
         }
-        if(Divroll.getAppId() != null) {
+        if (Divroll.getAppId() != null) {
             getRequest.header(HEADER_APP_ID, Divroll.getAppId());
         }
-        if(Divroll.getApiKey() != null) {
+        if (Divroll.getApiKey() != null) {
             getRequest.header(HEADER_API_KEY, Divroll.getApiKey());
         }
-        if(Divroll.getAuthToken() != null) {
+        if (Divroll.getAuthToken() != null) {
             getRequest.header(HEADER_AUTH_TOKEN, Divroll.getAuthToken());
         }
-        if(Divroll.getNamespace() != null) {
+        if (Divroll.getNamespace() != null) {
             getRequest.header(HEADER_NAMESPACE, Divroll.getNamespace());
         }
 
-        if(skip != null) {
+        if (skip != null) {
             getRequest.queryString("skip", String.valueOf(getSkip()));
         }
-        if(limit != null) {
+        if (limit != null) {
             getRequest.queryString("limit", String.valueOf(getLimit()));
         }
 
-        if(count != null) {
+        if (count != null) {
             getRequest.queryString("count", String.valueOf(getCount()));
         }
 
         final JSONArray rolesArray = new JSONArray();
-        if(roles != null && !roles.isEmpty()) {
+        if (roles != null && !roles.isEmpty()) {
             roles.forEach(role -> {
                 rolesArray.put(role);
             });
         }
 
-        if(rolesArray.length() > 0) {
+        if (rolesArray.length() > 0) {
             getRequest.queryString("roles", rolesArray.toString());
         }
 
-        if(include != null && !include.isEmpty()) {
+        if (include != null && !include.isEmpty()) {
             JSONArray linkNameArray = new JSONArray();
-            for(String linkName : include) {
+            for (String linkName : include) {
                 linkNameArray.put(linkName);
             }
             getRequest.queryString("include", linkNameArray.toString());
         }
 
+        if (authToken != null && !authToken.isEmpty()) {
+            getRequest.queryString("authToken", authToken);
+        }
+
         return getRequest.asJson().map(response -> {
-            if(response.getStatus() >= 500) {
+            if (response.getStatus() >= 500) {
                 throw new ServerErrorRequestException();
-            } else if(response.getStatus() == 401) {
+            } else if (response.getStatus() == 401) {
                 throw new UnauthorizedRequestException(response.getStatusText(), response.getStatus());
-            } else if(response.getStatus() == 400) {
+            } else if (response.getStatus() == 400) {
                 throw new BadRequestException(response.getStatusText(), response.getStatus());
-            }  else if(response.getStatus() >= 400) {
+            } else if (response.getStatus() >= 400) {
                 throw new ClientErrorRequestException(response.getStatusText(), response.getStatus());
-            } else if(response.getStatus() == 200) {
+            } else if (response.getStatus() == 200) {
 
                 JsonNode body = response.getBody();
 
@@ -131,16 +140,16 @@ public class DivrollUsers extends DivrollBase
                 int limit = users.getNumber("limit").intValue();
                 result = users.getLong("count");
 
-                if(results == null) {
+                if (results == null) {
                     JSONObject singleResultObject = users.getJSONObject("results");
-                    if(singleResultObject != null) {
+                    if (singleResultObject != null) {
                         results = new JSONArray();
                         results.put(singleResultObject);
                     }
                 }
 
-                if(results != null) {
-                    for(int i=0;i<results.length();i++){
+                if (results != null) {
+                    for (int i = 0; i < results.length(); i++) {
                         JSONObject userObj = results.getJSONObject(i);
                         String entityId = userObj.getString("entityId");
                         String username = userObj.getString("username");
@@ -148,7 +157,7 @@ public class DivrollUsers extends DivrollBase
                         Boolean publicWrite = userObj.getBoolean("publicWrite");
 
                         List<String> aclWriteList = aclWriteFrom(userObj);
-                        List<String> aclReadList =  aclReadFrom(userObj);
+                        List<String> aclReadList = aclReadFrom(userObj);
 
                         JSONArray userRoles = null;
                         try {
@@ -159,18 +168,18 @@ public class DivrollUsers extends DivrollBase
 
                         List<DivrollRole> divrollRoles = null;
                         try {
-                            if(userRoles != null) {
+                            if (userRoles != null) {
                                 Object roleObjects = userObj.get("roles");
-                                if(roleObjects instanceof JSONArray) {
+                                if (roleObjects instanceof JSONArray) {
                                     divrollRoles = new LinkedList<DivrollRole>();
-                                    for(int j=0;j<userRoles.length();j++) {
+                                    for (int j = 0; j < userRoles.length(); j++) {
                                         JSONObject jsonObject = userRoles.getJSONObject(j);
                                         String roleId = jsonObject.getString("entityId");
                                         DivrollRole divrollRole = new DivrollRole();
                                         divrollRole.setEntityId(roleId);
                                         divrollRoles.add(divrollRole);
                                     }
-                                } else if(roleObjects instanceof JSONObject) {
+                                } else if (roleObjects instanceof JSONObject) {
                                     divrollRoles = new LinkedList<DivrollRole>();
                                     JSONObject jsonObject = (JSONObject) roleObjects;
                                     String roleId = jsonObject.getString("entityId");
@@ -200,7 +209,7 @@ public class DivrollUsers extends DivrollBase
                         user.setDateUpdated(dateUpdated);
 
                         JSONArray links = userObj.getJSONArray("links");
-                        if(links != null) {
+                        if (links != null) {
                             user.setLinkedEntities(links);
                         } else {
                             user.setLinkedEntity(userObj.getJSONObject("links"));
@@ -260,5 +269,9 @@ public class DivrollUsers extends DivrollBase
 
     public void setInclude(List<String> include) {
         this.include = include;
+    }
+
+    public void setAuthToken(String authToken) {
+        this.authToken = authToken;
     }
 }

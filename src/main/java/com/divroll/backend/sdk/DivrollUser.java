@@ -59,6 +59,11 @@ public class DivrollUser extends DivrollBase
         if(Divroll.getNamespace() != null) {
             httpRequestWithBody.header(HEADER_NAMESPACE, Divroll.getNamespace());
         }
+
+        if(authToken != null && !authToken.isEmpty()) {
+            httpRequestWithBody.queryString("authToken", authToken);
+        }
+
         JSONObject body = new JSONObject();
         JSONObject userObj = new JSONObject();
 
