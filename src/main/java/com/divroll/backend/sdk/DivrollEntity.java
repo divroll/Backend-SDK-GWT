@@ -1,14 +1,12 @@
 package com.divroll.backend.sdk;
 
-import com.divroll.backend.sdk.exception.DivrollException;
 import com.divroll.backend.sdk.exception.UnsupportedPropertyValueException;
 import com.divroll.backend.sdk.helper.Base64Utils;
 import com.divroll.backend.sdk.helper.JSON;
-import com.google.gwt.http.client.RequestException;
-import com.google.gwt.json.client.JSONValue;
-import io.reactivex.Single;
 import com.divroll.http.client.*;
 import com.divroll.http.client.exceptions.*;
+import com.google.gwt.json.client.JSONValue;
+import io.reactivex.Single;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -47,12 +45,52 @@ public class DivrollEntity extends DivrollBase
         entityType = entityStore;
     }
 
+    public Single<String> getBlobPropertyBase64(String blobKey) {
+        GetRequest getRequest = (GetRequest) HttpClient.get(Divroll.getServerUrl()
+                + entityStoreBase + "/" + getEntityId() + "/blobs/" + blobKey)
+                .queryString("contentEncoding", "base64");
 
+        if(Divroll.getMasterKey() != null) {
+            getRequest.header(HEADER_MASTER_KEY, Divroll.getMasterKey());
+        }
+        if(Divroll.getAppId() != null) {
+            getRequest.header(HEADER_APP_ID, Divroll.getAppId());
+        }
+        if(Divroll.getApiKey() != null) {
+            getRequest.header(HEADER_API_KEY, Divroll.getApiKey());
+        }
+        if(Divroll.getAuthToken() != null) {
+            getRequest.header(HEADER_AUTH_TOKEN, Divroll.getAuthToken());
+        }
+        if(Divroll.getNamespace() != null) {
+            getRequest.header(HEADER_NAMESPACE, Divroll.getNamespace());
+        }
+        return getRequest.asString().map(response -> {
+            if(response.getStatus() >= 500) {
+                throw new ServerErrorRequestException();
+            } else if(response.getStatus() == 404) {
+                throw new NotFoundRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() == 401) {
+                throw new UnauthorizedRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() == 400) {
+                throw new BadRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() >= 400) {
+                throw new ClientErrorRequestException(response.getStatusText(), response.getStatus());
+            } else if(response.getStatus() == 200) {
+                if(response.getBody() != null) {
+                    return response.getBody();
+                }
+            }
+            return null;
+        });
+
+
+    }
 
     public Single<byte[]> getBlobProperty(String blobKey) {
         GetRequest getRequest = (GetRequest) HttpClient.get(Divroll.getServerUrl()
                 + entityStoreBase + "/" + getEntityId() + "/blobs/" + blobKey)
-                .queryString("encoding", "base64");
+                .queryString("contentEncoding", "base64");
 
         if(Divroll.getMasterKey() != null) {
             getRequest.header(HEADER_MASTER_KEY, Divroll.getMasterKey());
@@ -100,7 +138,7 @@ public class DivrollEntity extends DivrollBase
         }
         HttpRequestWithBody httpRequestWithBody = HttpClient.post(Divroll.getServerUrl()
                 + entityStoreBase + "/" + getEntityId() + "/blobs/" + blobKey)
-                .queryString("encoding", "base64");
+                .queryString("contentEncoding", "base64");
 
         if(Divroll.getMasterKey() != null) {
             httpRequestWithBody.header(HEADER_MASTER_KEY, Divroll.getMasterKey());
@@ -165,7 +203,7 @@ public class DivrollEntity extends DivrollBase
         }
         HttpRequestWithBody httpRequestWithBody = HttpClient.post(Divroll.getServerUrl()
                 + entityStoreBase + "/" + getEntityId() + "/blobs/" + blobKey)
-                .queryString("encoding", "base64");
+                .queryString("contentEncoding", "base64");
 
         if(Divroll.getMasterKey() != null) {
             httpRequestWithBody.header(HEADER_MASTER_KEY, Divroll.getMasterKey());
