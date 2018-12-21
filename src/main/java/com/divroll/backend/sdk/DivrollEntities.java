@@ -15,7 +15,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-public class DivrollEntities extends DivrollBase
+public class DivrollEntities extends LinkableDivrollBase
     implements Copyable<DivrollEntities> {
 
     private static final String entityStoreUrl = "/entities/";
@@ -188,6 +188,20 @@ public class DivrollEntities extends DivrollBase
                             divrollEntity.setProperty(propertyKey, entityJSONObject.get(propertyKey));
                         }
                     }
+
+                    JSONArray links = entityJSONObject.getJSONArray("links");
+                    if(links != null) {
+                        for(int j=0;j<links.length();j++) {
+                            JSONObject linksObj = links.getJSONObject(j);
+                            DivrollLink link = processLink(linksObj);
+                            divrollEntity.getLinks().add(link);
+                        }
+                    } else {
+                        JSONObject linksObj = entityJSONObject.getJSONObject("links");
+                        DivrollLink link = processLink(linksObj);
+                        divrollEntity.getLinks().add(link);
+                    }
+
                     getEntities().add(divrollEntity);
                 }
             }

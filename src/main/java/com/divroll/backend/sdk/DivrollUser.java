@@ -1,5 +1,6 @@
 package com.divroll.backend.sdk;
 
+import com.divroll.backend.sdk.helper.DivrollEntityHelper;
 import com.google.gwt.user.client.Cookies;
 import elemental.client.Browser;
 import io.reactivex.Single;
@@ -17,11 +18,12 @@ import static com.divroll.backend.sdk.helper.ACLHelper.aclReadFrom;
 import static com.divroll.backend.sdk.helper.ACLHelper.aclWriteFrom;
 import static com.divroll.backend.sdk.helper.RoleHelper.rolesFrom;
 
-public class DivrollUser extends DivrollBase
+public class DivrollUser extends LinkableDivrollBase
     implements Copyable<DivrollUser> {
 
     private static final String usersUrl = "/entities/users";
     private static final String loginUrl = "/entities/users/login";
+    private static final String QUERY_INCLUDE = "include";
 
     private String entityId;
     private String username;
@@ -34,9 +36,11 @@ public class DivrollUser extends DivrollBase
     private String dateCreated;
     private String dateUpdated;
 
-    private List<String> include;
-    private JSONObject linkedEntity;
-    private JSONArray linkedEntities;
+    private List<String> includes;
+    private List<DivrollLink> links;
+
+//    private JSONObject linkedEntity;
+//    private JSONArray linkedEntities;
 
     public Single<DivrollUser> create(String email, String username, String password,
                                       String linkName, DivrollEntity linkedEntity, String backlinkName) {
@@ -109,7 +113,7 @@ public class DivrollUser extends DivrollBase
         httpRequestWithBody.queryString("linkName", linkName);
         httpRequestWithBody.queryString("backlinkName", backlinkName);
         httpRequestWithBody.queryString("entityType", linkedEntity.getEntityType());
-        httpRequestWithBody.queryString("entity", linkedEntity.getProperties().toString());
+        httpRequestWithBody.queryString("entity", DivrollEntityHelper.convert(linkedEntity).toString());
 
         Browser.getWindow().getConsole().log("CREATE BODY=" + body);
         httpRequestWithBody.body(body);
@@ -456,12 +460,12 @@ public class DivrollUser extends DivrollBase
                     getRequest.header(HEADER_NAMESPACE, Divroll.getNamespace());
                 }
 
-                if(include != null && !include.isEmpty()) {
+                if(includes != null && !includes.isEmpty()) {
                     JSONArray linkNameArray = new JSONArray();
-                    for(String linkName : include) {
+                    for(String linkName : includes) {
                         linkNameArray.put(linkName);
                     }
-                    getRequest.queryString("include", linkNameArray.toString());
+                    getRequest.queryString(QUERY_INCLUDE, linkNameArray.toString());
                 }
 
                 Single<HttpResponse<JsonNode>> responseSingle = getRequest.asJson();
@@ -507,9 +511,15 @@ public class DivrollUser extends DivrollBase
 
                             JSONArray links = userJsonObj.getJSONArray("links");
                             if(links != null) {
-                                linkedEntities = links;
+                                for(int i=0;i<links.length();i++) {
+                                    JSONObject linksObj = links.getJSONObject(i);
+                                    DivrollLink link = processLink(linksObj);
+                                    getLinks().add(link);
+                                }
                             } else {
-                                linkedEntity = userJsonObj.getJSONObject("links");
+                                JSONObject linksObj = userJsonObj.getJSONObject("links");
+                                DivrollLink link = processLink(linksObj);
+                                getLinks().add(link);
                             }
 
                             emitter.onSuccess(copy());
@@ -1210,31 +1220,24 @@ public class DivrollUser extends DivrollBase
             }
             return false;
         });
-
-
     }
 
-    public JSONObject getLinkedEntity() {
-        return linkedEntity;
+    public void setIncludes(List<String> includes) {
+        this.includes = includes;
     }
 
-    public void setLinkedEntity(JSONObject linkedEntity) {
-        this.linkedEntity = linkedEntity;
+    public List<DivrollLink> getLinks() {
+        if(links == null) {
+            links = new LinkedList<>();
+        }
+        return links;
     }
 
-    public JSONArray getLinkedEntities() {
-        return linkedEntities;
+    public DivrollLink getFirstLink() {
+        if(links != null) {
+            return links.iterator().next();
+        }
+        return null;
     }
 
-    public void setLinkedEntities(JSONArray linkedEntities) {
-        this.linkedEntities = linkedEntities;
-    }
-
-    public List<String> getInclude() {
-        return include;
-    }
-
-    public void setInclude(List<String> include) {
-        this.include = include;
-    }
 }

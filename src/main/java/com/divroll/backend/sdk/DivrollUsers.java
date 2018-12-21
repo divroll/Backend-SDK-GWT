@@ -7,10 +7,8 @@ import com.divroll.http.client.exceptions.BadRequestException;
 import com.divroll.http.client.exceptions.ClientErrorRequestException;
 import com.divroll.http.client.exceptions.ServerErrorRequestException;
 import com.divroll.http.client.exceptions.UnauthorizedRequestException;
-import com.google.gwt.http.client.RequestException;
 import elemental.client.Browser;
 import io.reactivex.Single;
-import org.apache.xpath.operations.Bool;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -20,7 +18,7 @@ import java.util.List;
 import static com.divroll.backend.sdk.helper.ACLHelper.aclReadFrom;
 import static com.divroll.backend.sdk.helper.ACLHelper.aclWriteFrom;
 
-public class DivrollUsers extends DivrollBase
+public class DivrollUsers extends LinkableDivrollBase
     implements Copyable<DivrollUsers> {
 
     private static final String usersUrl = "/entities/users";
@@ -209,10 +207,16 @@ public class DivrollUsers extends DivrollBase
                         user.setDateUpdated(dateUpdated);
 
                         JSONArray links = userObj.getJSONArray("links");
-                        if (links != null) {
-                            user.setLinkedEntities(links);
+                        if(links != null) {
+                            for(int j=0;j<links.length();j++) {
+                                JSONObject linksObj = links.getJSONObject(j);
+                                DivrollLink divrollLink = processLink(linksObj);
+                                user.getLinks().add(divrollLink);
+                            }
                         } else {
-                            user.setLinkedEntity(userObj.getJSONObject("links"));
+                            JSONObject linksObj = userObj.getJSONObject("links");
+                            DivrollLink divrollLink = processLink(linksObj);
+                            user.getLinks().add(divrollLink);
                         }
 
                         List<DivrollUser> divrollUsers = getUsers();
@@ -274,4 +278,5 @@ public class DivrollUsers extends DivrollBase
     public void setAuthToken(String authToken) {
         this.authToken = authToken;
     }
+
 }

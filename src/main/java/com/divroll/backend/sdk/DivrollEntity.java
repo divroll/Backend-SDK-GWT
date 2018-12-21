@@ -6,6 +6,7 @@ import com.divroll.backend.sdk.helper.JSON;
 import com.divroll.http.client.*;
 import com.divroll.http.client.exceptions.*;
 import com.google.gwt.json.client.JSONValue;
+import elemental.client.Browser;
 import io.reactivex.Single;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -15,7 +16,7 @@ import java.util.*;
 import static com.divroll.backend.sdk.helper.ACLHelper.aclReadFrom;
 import static com.divroll.backend.sdk.helper.ACLHelper.aclWriteFrom;
 
-public class DivrollEntity extends DivrollBase
+public class DivrollEntity extends LinkableDivrollBase
     implements Copyable<DivrollEntity> {
 
     private String entityStoreBase = "/entities/";
@@ -26,6 +27,7 @@ public class DivrollEntity extends DivrollBase
     private String dateCreated;
     private String dateUpdated;
 
+    private List<DivrollLink> links;
     private String linkName;
     private String linkFrom;
 
@@ -297,12 +299,17 @@ public class DivrollEntity extends DivrollBase
         });
     }
 
-    public void setProperty(String propertyName, Object propertyValue) throws UnsupportedPropertyValueException {
+    public void setProperty(String propertyName, Object propertyValue) {
         if(propertyValue == null) {
             entityObj.put(propertyName, JSONObject.NULL);
         } else {
-            DivrollPropertyValue divrollPropertyValue = new DivrollPropertyValue(propertyValue);
-            entityObj.put(propertyName, divrollPropertyValue.getValue());
+            DivrollPropertyValue divrollPropertyValue = null;
+            try {
+                divrollPropertyValue = new DivrollPropertyValue(propertyValue);
+                entityObj.put(propertyName, divrollPropertyValue.getValue());
+            } catch (UnsupportedPropertyValueException e) {
+                Browser.getWindow().getConsole().error(e.getMessage());
+            }
         }
     }
 
@@ -1088,6 +1095,19 @@ public class DivrollEntity extends DivrollBase
                 setDateCreated(dateCreated);
                 setDateUpdated(dateUpdated);
 
+                JSONArray links = entityJsonObject.getJSONArray("links");
+                if(links != null) {
+                    for(int i=0;i<links.length();i++) {
+                        JSONObject linksObj = links.getJSONObject(i);
+                        DivrollLink link = processLink(linksObj);
+                        getLinks().add(link);
+                    }
+                } else {
+                    JSONObject linksObj = entityJsonObject.getJSONObject("links");
+                    DivrollLink link = processLink(linksObj);
+                    getLinks().add(link);
+                }
+
             }
             return copy();
         });
@@ -1214,5 +1234,19 @@ public class DivrollEntity extends DivrollBase
 
     public String getEntityType() {
         return entityType;
+    }
+
+    public List<DivrollLink> getLinks() {
+        if(links == null) {
+            links = new LinkedList<>();
+        }
+        return links;
+    }
+
+    public DivrollLink getFirstLink() {
+        if(links != null) {
+            return links.iterator().next();
+        }
+        return null;
     }
 }

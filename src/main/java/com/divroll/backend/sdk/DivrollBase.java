@@ -1,9 +1,14 @@
 package com.divroll.backend.sdk;
 
 import com.divroll.backend.sdk.exception.DivrollException;
+import com.divroll.backend.sdk.helper.DivrollEntityHelper;
 import com.divroll.http.client.HttpResponse;
 import com.divroll.http.client.JsonNode;
+import org.json.JSONArray;
 import org.json.JSONObject;
+
+import java.util.LinkedList;
+import java.util.List;
 
 public abstract class DivrollBase {
 
@@ -19,5 +24,7 @@ public abstract class DivrollBase {
         JSONObject statusInfo = jsonObject.getJSONObject("org.restlet.engine.application.StatusInfo");
         throw new DivrollException(statusInfo.getString("description"));
     }
+
+
 
 }
