@@ -24,6 +24,7 @@ public class DivrollEntities extends LinkableDivrollBase
     private Integer skip;
     private Integer limit;
     private Boolean count;
+    private String sort;
     private Long result;
     private String entityStore;
 
@@ -131,6 +132,10 @@ public class DivrollEntities extends LinkableDivrollBase
             getRequest.queryString("count", String.valueOf(getCount()));
         }
 
+        if(sort != null) {
+            getRequest.queryString("sort", String.valueOf(sort));
+        }
+
         return getRequest.asJson().map(response -> {
             if(response.getStatus() >= 500) {
                 throw new HttpRequestException(response.getStatusText(), response.getStatus());
@@ -231,4 +236,7 @@ public class DivrollEntities extends LinkableDivrollBase
         return result;
     }
 
+    public void setSort(String sort) {
+        this.sort = sort;
+    }
 }

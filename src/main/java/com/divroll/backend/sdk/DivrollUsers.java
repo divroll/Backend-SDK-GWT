@@ -27,6 +27,7 @@ public class DivrollUsers extends LinkableDivrollBase
     private Integer skip = 0;
     private Integer limit = 100;
     private Boolean count;
+    private String sort;
     private Long result;
     private List<String> roles;
     private List<String> include;
@@ -116,6 +117,10 @@ public class DivrollUsers extends LinkableDivrollBase
 
         if (authToken != null && !authToken.isEmpty()) {
             getRequest.queryString("authToken", authToken);
+        }
+
+        if(sort != null) {
+            getRequest.queryString("sort", String.valueOf(sort));
         }
 
         return getRequest.asJson().map(response -> {
@@ -279,4 +284,7 @@ public class DivrollUsers extends LinkableDivrollBase
         this.authToken = authToken;
     }
 
+    public void setSort(String sort) {
+        this.sort = sort;
+    }
 }
