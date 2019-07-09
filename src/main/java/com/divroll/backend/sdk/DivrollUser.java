@@ -42,6 +42,8 @@ public class DivrollUser extends LinkableDivrollBase
 //    private JSONObject linkedEntity;
 //    private JSONArray linkedEntities;
 
+    private List<String> blobNames;
+
     public Single<DivrollUser> create(String email, String username, String password,
                                       String linkName, DivrollEntity linkedEntity, String backlinkName) {
         setUsername(username);
@@ -133,9 +135,9 @@ public class DivrollUser extends LinkableDivrollBase
                 JSONObject bodyObj = responseBody.getObject();
                 JSONObject responseUser = bodyObj.getJSONObject("user");
                 String entityId = responseUser.getString("entityId");
-                String webToken = responseUser.getString("webToken");
+                String authToken = responseUser.getString("authToken");
                 setEntityId(entityId);
-                setAuthToken(webToken);
+                setAuthToken(authToken);
 
                 Boolean publicRead = responseUser.get("publicRead") != null ? responseUser.getBoolean("publicRead") : null;
                 Boolean publicWrite = responseUser.get("publicWrite") != null ? responseUser.getBoolean("publicWrite") : null;
@@ -260,9 +262,9 @@ public class DivrollUser extends LinkableDivrollBase
                 JSONObject bodyObj = responseBody.getObject();
                 JSONObject responseUser = bodyObj.getJSONObject("user");
                 String entityId = responseUser.getString("entityId");
-                String webToken = responseUser.getString("webToken");
+                String authToken = responseUser.getString("authToken");
                 setEntityId(entityId);
-                setAuthToken(webToken);
+                setAuthToken(authToken);
 
                 Boolean publicRead = responseUser.get("publicRead") != null ? responseUser.getBoolean("publicRead") : null;
                 Boolean publicWrite = responseUser.get("publicWrite") != null ? responseUser.getBoolean("publicWrite") : null;
@@ -388,9 +390,9 @@ public class DivrollUser extends LinkableDivrollBase
                 JSONObject bodyObj = responseBody.getObject();
                 JSONObject responseUser = bodyObj.getJSONObject("user");
                 String entityId = responseUser.getString("entityId");
-                String webToken = responseUser.getString("webToken");
+                String authToken = responseUser.getString("authToken");
                 setEntityId(entityId);
-                setAuthToken(webToken);
+                setAuthToken(authToken);
 
                 Boolean publicRead = responseUser.get("publicRead") != null ? responseUser.getBoolean("publicRead") : null;
                 Boolean publicWrite = responseUser.get("publicWrite") != null ? responseUser.getBoolean("publicWrite") : null;
@@ -620,7 +622,7 @@ public class DivrollUser extends LinkableDivrollBase
                             JSONObject bodyObj = responseBody.getObject();
                             JSONObject responseUser = bodyObj.getJSONObject("user");
                             String entityId = responseUser.getString("entityId");
-                            //String webToken = responseUser.getString("webToken");
+                            //String authToken = responseUser.getString("authToken");
                             String updatedUsername = null;
 
                             try {
@@ -630,7 +632,7 @@ public class DivrollUser extends LinkableDivrollBase
                             }
 
                             setEntityId(entityId);
-                            //setAuthToken(webToken);
+                            //setAuthToken(authToken);
 
                             Boolean publicRead = responseUser.getBoolean("publicRead");;
                             Boolean publicWrite = responseUser.getBoolean("publicWrite");
@@ -762,7 +764,7 @@ public class DivrollUser extends LinkableDivrollBase
                 JSONObject bodyObj = body.getObject();
                 JSONObject user = bodyObj.getJSONObject("user");
                 String entityId = user.getString("entityId");
-                //String webToken = user.getString("webToken");
+                //String authToken = user.getString("authToken");
                 String username = user.getString("username");
 
                 Boolean publicRead = user.getBoolean("publicRead");
@@ -861,10 +863,10 @@ public class DivrollUser extends LinkableDivrollBase
                 JSONObject bodyObj = body.getObject();
                 JSONObject user = bodyObj.getJSONObject("user");
                 String entityId = user.getString("entityId");
-                String webToken = user.getString("webToken");
+                String authToken = user.getString("authToken");
                 setEntityId(entityId);
-                setAuthToken(webToken);
-                Divroll.setAuthToken(webToken);
+                setAuthToken(authToken);
+                Divroll.setAuthToken(authToken);
                 Divroll.setCurrentUser(copy());
                 if(remember) {
                     Cookies.setCookie("authToken", authToken);
@@ -955,6 +957,18 @@ public class DivrollUser extends LinkableDivrollBase
         Browser.getWindow().getConsole().log(toString());
         return this;
     }
+
+    public List<String> getBlobNames() {
+        if(blobNames == null) {
+            blobNames = new LinkedList<>();
+        }
+        return blobNames;
+    }
+
+    private void setBlobNames(List<String> blobNames) {
+        this.blobNames = blobNames;
+    }
+
 
     public String getEmail() {
         return email;
