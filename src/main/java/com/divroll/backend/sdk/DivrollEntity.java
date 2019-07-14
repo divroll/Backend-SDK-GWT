@@ -513,6 +513,18 @@ public class DivrollEntity extends LinkableDivrollBase
                             if(value == null) {
                                 divrollEntity.getAcl().setAclWrite(Arrays.asList(entityJSONObject.getString("aclWrite")));
                             }
+                        } else if(propertyKey.equals("linkNames")) {
+                            JSONArray jsonArray = entityJSONObject.getJSONArray(propertyKey);
+                            for(int li=0;li<jsonArray.length();li++) {
+                                String lName = jsonArray.getString(li);
+                                divrollEntity.getLinkNames().add(lName);
+                            }
+                        } else if(propertyKey.equals("blobNames")) {
+                            JSONArray blobNamesArray = entityJSONObject.getJSONArray("blobNames");
+                            for(int bi=0;bi<blobNamesArray.length();bi++) {
+                                String blobName = blobNamesArray.getString(bi);
+                                divrollEntity.getBlobNames().add(blobName);
+                            }
                         } else {
                             divrollEntity.setProperty(propertyKey, entityJSONObject.get(propertyKey));
                         }
