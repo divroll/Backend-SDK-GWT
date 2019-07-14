@@ -83,12 +83,12 @@
     <dependency>
       <groupId>com.divroll</groupId>
       <artifactId>json-gwt</artifactId>
-      <version>0-SNAPSHOT</version>
+      <version>0</version>
     </dependency>
     <dependency>
       <groupId>com.divroll.http</groupId>
       <artifactId>httpclient</artifactId>
-      <version>0-SNAPSHOT</version>
+      <version>0</version>
     </dependency>
   </dependencies>
 
@@ -255,14 +255,17 @@
       </build>
       <repositories>
         <repository>
-          <id>divroll-github-repo</id>
-          <url>https://raw.githubusercontent.com/divroll/repo/master/</url>
-          <releases>
-            <enabled>true</enabled>
-          </releases>
           <snapshots>
             <enabled>true</enabled>
           </snapshots>
+          <id>bintray-divroll-maven</id>
+          <name>bintray</name>
+          <url>https://dl.bintray.com/divroll/maven</url>
+        </repository>
+        <repository>
+          <id>oss-jfrog-artifactory-snapshots</id>
+          <name>oss-jfrog-artifactory-snapshots</name>
+          <url>http://oss.jfrog.org/artifactory/oss-snapshot-local</url>
         </repository>
         <repository>
           <id>gwt-snapshots-tmp-repo</id>
@@ -278,12 +281,6 @@
         <repository>
           <id>rxjava-gwt-repo</id>
           <url>https://raw.githubusercontent.com/intendia-oss/rxjava-gwt/mvn-repo/</url>
-        </repository>
-        <!-- Snapshot repository -->
-        <repository>
-          <id>oss-jfrog-artifactory-snapshots</id>
-          <name>oss-jfrog-artifactory-snapshots</name>
-          <url>http://oss.jfrog.org/artifactory/oss-snapshot-local</url>
         </repository>
       </repositories>
     </profile>
