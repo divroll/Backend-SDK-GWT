@@ -30,6 +30,8 @@ public class DivrollEntity extends LinkableDivrollBase
     private List<DivrollLink> links;
     private String linkName;
     private String linkFrom;
+    private String linkEntityType;
+    private Boolean linkType;
 
     private JSONObject entityObj = new JSONObject();
 
@@ -37,6 +39,10 @@ public class DivrollEntity extends LinkableDivrollBase
 
     public void setBacklink(String linkName, String linkFrom) {
         this.linkFrom = linkFrom;
+        this.linkName = linkName;
+    }
+
+    public void setLinkName(String linkName) {
         this.linkName = linkName;
     }
 
@@ -934,6 +940,16 @@ public class DivrollEntity extends LinkableDivrollBase
             httpRequestWithBody.queryString("linkFrom", linkFrom);
         }
 
+        if(linkName != null) {
+            httpRequestWithBody.queryString("linkName", linkName);
+        }
+        if(linkEntityType != null) {
+            httpRequestWithBody.queryString("entityType", linkEntityType);
+        }
+        if(linkType == true) {
+            httpRequestWithBody.queryString("linkType", "set");
+        }
+
         return httpRequestWithBody.body(body).asJson().map(response -> {
             if(response.getStatus() >= 500) {
                 throw new HttpRequestException(response.getStatusText(),response.getStatus());
@@ -1260,5 +1276,17 @@ public class DivrollEntity extends LinkableDivrollBase
             return links.iterator().next();
         }
         return null;
+    }
+
+    public void setLinkEntityType(String linkEntityType) {
+        this.linkEntityType = linkEntityType;
+    }
+
+    public Boolean getLinkType() {
+        return linkType;
+    }
+
+    public void setLinkType(Boolean linkType) {
+        this.linkType = linkType;
     }
 }
