@@ -946,7 +946,7 @@ public class DivrollEntity extends LinkableDivrollBase
         if(linkEntityType != null) {
             httpRequestWithBody.queryString("entityType", linkEntityType);
         }
-        if(linkType == true) {
+        if(linkType != null && linkType == true) {
             httpRequestWithBody.queryString("linkType", "set");
         }
 
