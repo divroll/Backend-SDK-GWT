@@ -81,6 +81,11 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>com.intendia.gwt</groupId>
+      <artifactId>rxjava-gwt</artifactId>
+      <version>1.3.4-gwt1</version>
+    </dependency>
+    <dependency>
       <groupId>com.divroll</groupId>
       <artifactId>json-gwt</artifactId>
       <version>0</version>
@@ -256,7 +261,7 @@
       <repositories>
         <repository>
           <snapshots>
-            <enabled>true</enabled>
+            <enabled>false</enabled>
           </snapshots>
           <id>bintray-divroll-maven</id>
           <name>bintray</name>
