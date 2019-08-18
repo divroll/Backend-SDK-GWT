@@ -94,6 +94,12 @@
       <groupId>com.divroll.http</groupId>
       <artifactId>httpclient</artifactId>
       <version>0</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.divroll</groupId>
+          <artifactId>json-gwt</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
   </dependencies>
 

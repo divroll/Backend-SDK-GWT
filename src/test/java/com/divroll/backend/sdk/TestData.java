@@ -33,6 +33,12 @@ import org.json.JSONObject;
 
 public class TestData {
 
+    static {
+//        String serverUrl = "https://divroll-backend.herokuapp.com/divroll";
+        String serverUrl = "http://localhost:8080/divroll";
+        setDivrollServerUrl(serverUrl);
+    }
+
     public static Single<TestApplication> getNewApplication() throws RequestException {
         DataFactory df = new DataFactory();
         HttpRequestWithBody httpRequest = (HttpRequestWithBody) HttpClient.post(
@@ -69,5 +75,9 @@ public class TestData {
             return null;
         });
     }
+
+    public static native void setDivrollServerUrl(String serverUrl) /*-{
+        $wnd.divrollServerUrl = serverUrl;
+    }-*/;
 
 }

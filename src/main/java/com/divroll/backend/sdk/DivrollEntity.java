@@ -25,6 +25,7 @@ import com.divroll.backend.sdk.exception.UnsupportedPropertyValueException;
 import com.divroll.backend.sdk.helper.Base64Utils;
 import com.divroll.backend.sdk.helper.JSON;
 import com.divroll.http.client.*;
+import com.divroll.http.client.Base64;
 import com.divroll.http.client.exceptions.*;
 import com.google.gwt.json.client.JSONValue;
 import elemental.client.Browser;
@@ -32,6 +33,7 @@ import io.reactivex.Single;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.UnsupportedEncodingException;
 import java.util.*;
 
 import static com.divroll.backend.sdk.helper.ACLHelper.aclReadFrom;
@@ -1310,4 +1312,21 @@ public class DivrollEntity extends LinkableDivrollBase
     public void setLinkType(Boolean linkType) {
         this.linkType = linkType;
     }
+
+    public String getBlobPath(String blobName) {
+        //String appId, String apiKey, String masterKey, String nameSpace
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("appId", Divroll.getAppId());
+        jsonObject.put("apiKey", Divroll.getApiKey());
+        jsonObject.put("masterKey", Divroll.getMasterKey());
+        jsonObject.put("nameSpace", Divroll.getNamespace());
+        jsonObject.put("authToken", Divroll.getAuthToken());
+        jsonObject.put("entityId", getEntityId());
+        jsonObject.put("entityType", getEntityType());
+        jsonObject.put("blobName", blobName);
+        String jsonString = jsonObject.toString();
+        String base64path =  Base64.btoa(jsonString);
+        return base64path;
+    }
+
 }

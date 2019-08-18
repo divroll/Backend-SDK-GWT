@@ -545,6 +545,14 @@ public class DivrollUser extends LinkableDivrollBase
                                 getLinks().add(link);
                             }
 
+                            JSONArray blobNamesArray = userJsonObj.getJSONArray("blobNames");
+                            if(blobNamesArray != null) {
+                                for(int i=0;i<blobNamesArray.length();i++) {
+                                    String blobName = blobNamesArray.getString(i);
+                                    getBlobNames().add(blobName);
+                                }
+                            }
+
                             emitter.onSuccess(copy());
 
                         }
