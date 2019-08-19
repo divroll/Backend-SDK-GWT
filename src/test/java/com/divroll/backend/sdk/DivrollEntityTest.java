@@ -81,10 +81,8 @@ public class DivrollEntityTest extends GWTTestCase {
                     if(pair.second) {
                         DivrollEntity entity = pair.first;
                         String blobPath = entity.getBlobPath("text");
-                        Browser.getWindow().getConsole().log("Blob path - " + blobPath);
-                        String completeUrl = Divroll.getServerUrl() + "/blobs/" + blobPath;
-                        Browser.getWindow().getConsole().log("Complete URL - " + completeUrl);
-                        GetRequest getRequest = HttpClient.get(completeUrl);
+                        Browser.getWindow().getConsole().log("Complete URL - " + blobPath);
+                        GetRequest getRequest = HttpClient.get(blobPath);
                         return getRequest.asString();
                     } else {
                         Boolean success = false;

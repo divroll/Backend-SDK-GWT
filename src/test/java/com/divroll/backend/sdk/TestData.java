@@ -34,8 +34,8 @@ import org.json.JSONObject;
 public class TestData {
 
     static {
-//        String serverUrl = "https://divroll-backend.herokuapp.com/divroll";
-        String serverUrl = "http://localhost:8080/divroll";
+        String serverUrl = "https://divroll-backend.herokuapp.com/divroll";
+//        String serverUrl = "http://localhost:8080/divroll";
         setDivrollServerUrl(serverUrl);
     }
 

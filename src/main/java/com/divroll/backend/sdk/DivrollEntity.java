@@ -1326,7 +1326,8 @@ public class DivrollEntity extends LinkableDivrollBase
         jsonObject.put("blobName", blobName);
         String jsonString = jsonObject.toString();
         String base64path =  Base64.btoa(jsonString);
-        return base64path;
+        String completeUrl = Divroll.getServerUrl() + "/blobs/" + base64path;
+        return completeUrl;
     }
 
 }
