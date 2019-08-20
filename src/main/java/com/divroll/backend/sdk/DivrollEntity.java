@@ -427,6 +427,14 @@ public class DivrollEntity extends LinkableDivrollBase
         return entityObj;
     }
 
+    public <T> List<T> getListProperty(String propertyName, Class<T> clazz) {
+        Object value = getProperty(propertyName);
+        if(value != null && value instanceof List) {
+            return (List<T>) value;
+        }
+        return null;
+    }
+
     public Object getProperty(String propertyName) {
         Object value = entityObj.get(propertyName);
         if(value instanceof JSONValue) {
