@@ -31,22 +31,22 @@ import java.util.Map;
 
 public class DivrollCustomCode extends DivrollBase {
 
-    private String functionName;
+    private String customCodeName;
     private String methodName;
     private JSONObject body;
     private Map<String,String> params;
 
     private DivrollCustomCode() {}
 
-    public DivrollCustomCode(String functionName, String methodName) {
-        setFunctionName(functionName);
+    public DivrollCustomCode(String customCodeName, String methodName) {
+        setCustomCodeName(customCodeName);
         setMethodName(methodName);
     }
 
     public Single<HttpResponse<JsonNode>> post() {
 
         HttpRequestWithBody httpRequestWithBody = HttpClient.post(Divroll.getServerUrl()
-                + "/functions" + "/" + functionName + "/" + methodName);
+                + "/customCodes" + "/" + customCodeName + "/" + methodName);
 
         if(Divroll.getMasterKey() != null) {
             httpRequestWithBody.header(HEADER_MASTER_KEY, Divroll.getMasterKey());
@@ -87,7 +87,7 @@ public class DivrollCustomCode extends DivrollBase {
     public Single<HttpResponse<JsonNode>> put() {
 
         HttpRequestWithBody httpRequestWithBody = HttpClient.post(Divroll.getServerUrl()
-                + "/functions" + "/" + functionName + "/" + methodName);
+                + "/customCodes" + "/" + customCodeName + "/" + methodName);
 
         if(Divroll.getMasterKey() != null) {
             httpRequestWithBody.header(HEADER_MASTER_KEY, Divroll.getMasterKey());
@@ -128,7 +128,7 @@ public class DivrollCustomCode extends DivrollBase {
     public Single<HttpResponse<JsonNode>> delete() {
 
         HttpRequestWithBody httpRequestWithBody = HttpClient.delete(Divroll.getServerUrl()
-                + "/functions" + "/" + functionName + "/" + methodName);
+                + "/customCodes" + "/" + customCodeName + "/" + methodName);
 
         if(Divroll.getMasterKey() != null) {
             httpRequestWithBody.header(HEADER_MASTER_KEY, Divroll.getMasterKey());
@@ -169,7 +169,7 @@ public class DivrollCustomCode extends DivrollBase {
     public Single<HttpResponse<JsonNode>> get() {
 
         GetRequest httpRequestWithBody = HttpClient.get(Divroll.getServerUrl()
-                + "/functions" + "/" + functionName + "/" + methodName);
+                + "/customCodes" + "/" + customCodeName + "/" + methodName);
 
         if(Divroll.getMasterKey() != null) {
             httpRequestWithBody.header(HEADER_MASTER_KEY, Divroll.getMasterKey());
@@ -201,8 +201,8 @@ public class DivrollCustomCode extends DivrollBase {
 
     }
 
-    public void setFunctionName(String functionName) {
-        this.functionName = functionName;
+    public void setCustomCodeName(String customCodeName) {
+        this.customCodeName = customCodeName;
     }
 
     public void setMethodName(String methodName) {
