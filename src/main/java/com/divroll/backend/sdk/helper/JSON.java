@@ -21,10 +21,12 @@
  */
 package com.divroll.backend.sdk.helper;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.json.client.JSONBoolean;
 import com.google.gwt.json.client.JSONNull;
 import com.google.gwt.json.client.JSONNumber;
 import com.google.gwt.json.client.JSONString;
+import com.google.gwt.user.client.Window;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -175,6 +177,8 @@ public class JSON {
                     jso.put(key, jso);
                 } else if(value instanceof com.google.gwt.json.client.JSONArray) {
                     jsonObject.put(key, (com.google.gwt.json.client.JSONArray) value);
+                } else if(value instanceof LinkedHashMap) {
+                    jsonObject.put(key, mapToJSONObject((Map<String, Object>) value));
                 } else {
                     throw new IllegalArgumentException("Object type " + value.getClass().getName() + " is not supported.");
                 }
@@ -217,6 +221,8 @@ public class JSON {
                     jsonArray.set(jsonArray.size(), jso);
                 } else if(value instanceof com.google.gwt.json.client.JSONArray) {
                     jsonArray.set(jsonArray.size(), (com.google.gwt.json.client.JSONArray) value);
+                } else if(value instanceof LinkedHashMap) {
+                    jsonArray.set(jsonArray.size(), mapToJSONObject((LinkedHashMap)value));
                 } else {
                     throw new IllegalArgumentException("Object type " + value.getClass().getName() + " is not supported.");
                 }
